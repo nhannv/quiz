@@ -15,6 +15,7 @@ type StoreResult struct {
 }
 
 type Store interface {
+	School() SchoolStore
 	Team() TeamStore
 	Channel() ChannelStore
 	Post() PostStore
@@ -56,6 +57,14 @@ type Store interface {
 	TotalReadDbConnections() int
 	TotalSearchDbConnections() int
 	CheckIntegrity() <-chan IntegrityCheckResult
+}
+
+type SchoolStore interface {
+	Save(school *model.School) (*model.School, *model.AppError)
+	Update(school *model.School) (*model.School, *model.AppError)
+	Get(id string) (*model.School, *model.AppError)
+	UpdateLastSchoolIconUpdate(schoolId string, curTime int64) *model.AppError
+	ClearCaches()
 }
 
 type TeamStore interface {

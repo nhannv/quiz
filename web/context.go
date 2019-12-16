@@ -229,6 +229,17 @@ func (c *Context) RequireUserId() *Context {
 	return c
 }
 
+func (c *Context) RequireSchoolId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.SchoolId) != 26 {
+		c.SetInvalidUrlParam("school_id")
+	}
+	return c
+}
+
 func (c *Context) RequireTeamId() *Context {
 	if c.Err != nil {
 		return c

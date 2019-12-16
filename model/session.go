@@ -28,17 +28,18 @@ const (
 )
 
 type Session struct {
-	Id             string        `json:"id"`
-	Token          string        `json:"token"`
-	CreateAt       int64         `json:"create_at"`
-	ExpiresAt      int64         `json:"expires_at"`
-	LastActivityAt int64         `json:"last_activity_at"`
-	UserId         string        `json:"user_id"`
-	DeviceId       string        `json:"device_id"`
-	Roles          string        `json:"roles"`
-	IsOAuth        bool          `json:"is_oauth"`
-	Props          StringMap     `json:"props"`
-	TeamMembers    []*TeamMember `json:"team_members" db:"-"`
+	Id             string          `json:"id"`
+	Token          string          `json:"token"`
+	CreateAt       int64           `json:"create_at"`
+	ExpiresAt      int64           `json:"expires_at"`
+	LastActivityAt int64           `json:"last_activity_at"`
+	UserId         string          `json:"user_id"`
+	DeviceId       string          `json:"device_id"`
+	Roles          string          `json:"roles"`
+	IsOAuth        bool            `json:"is_oauth"`
+	Props          StringMap       `json:"props"`
+	TeamMembers    []*TeamMember   `json:"team_members" db:"-"`
+	SchoolMembers  []*SchoolMember `json:"school_members" db:"-"`
 }
 
 func (me *Session) DeepCopy() *Session {
@@ -119,6 +120,16 @@ func (me *Session) AddProp(key string, value string) {
 	}
 
 	me.Props[key] = value
+}
+
+func (me *Session) GetSchoolBySchoolId(schoolId string) *SchoolMember {
+	for _, school := range me.SchoolMembers {
+		if school.SchoolId == schoolId {
+			return school
+		}
+	}
+
+	return nil
 }
 
 func (me *Session) GetTeamByTeamId(teamId string) *TeamMember {

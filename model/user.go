@@ -129,6 +129,7 @@ type UserForIndexing struct {
 }
 
 type ViewUsersRestrictions struct {
+	Schools  []string
 	Teams    []string
 	Channels []string
 }
@@ -137,7 +138,8 @@ func (r *ViewUsersRestrictions) Hash() string {
 	if r == nil {
 		return ""
 	}
-	ids := append(r.Teams, r.Channels...)
+	ids := append(r.Schools, r.Teams...)
+	ids  = append(ids, r.Channels...)
 	sort.Strings(ids)
 	hash := sha256.New()
 	hash.Write([]byte(strings.Join(ids, "")))

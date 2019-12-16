@@ -112,6 +112,11 @@ type Routes struct {
 
 	TermsOfService *mux.Router // 'api/v4/terms_of_service
 	Groups         *mux.Router // 'api/v4/groups'
+
+	Schools *mux.Router // 'api/v4/schools'
+	School  *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}'
+	SchoolMembers        *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members'
+	SchoolMember         *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
 }
 
 type API struct {
@@ -214,6 +219,11 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.TermsOfService = api.BaseRoutes.ApiRoot.PathPrefix("/terms_of_service").Subrouter()
 	api.BaseRoutes.Groups = api.BaseRoutes.ApiRoot.PathPrefix("/groups").Subrouter()
 
+	api.BaseRoutes.Schools = api.BaseRoutes.ApiRoot.PathPrefix("/schools").Subrouter()
+	api.BaseRoutes.School = api.BaseRoutes.Schools.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.SchoolMembers = api.BaseRoutes.School.PathPrefix("/members").Subrouter()
+	api.BaseRoutes.SchoolMember = api.BaseRoutes.SchoolMembers.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
+
 	api.InitUser()
 	api.InitBot()
 	api.InitTeam()
@@ -247,6 +257,7 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.InitTermsOfService()
 	api.InitGroup()
 	api.InitAction()
+	api.InitSchool()
 
 	root.Handle("/api/v4/{anything:.*}", http.HandlerFunc(api.Handle404))
 

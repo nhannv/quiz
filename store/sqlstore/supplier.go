@@ -68,6 +68,7 @@ const (
 )
 
 type SqlSupplierStores struct {
+	school               store.SchoolStore
 	team                 store.TeamStore
 	channel              store.ChannelStore
 	post                 store.PostStore
@@ -123,6 +124,7 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 
 	supplier.initConnection()
 
+	supplier.stores.school = NewSqlSchoolStore(supplier)
 	supplier.stores.team = NewSqlTeamStore(supplier)
 	supplier.stores.channel = NewSqlChannelStore(supplier, metrics)
 	supplier.stores.post = NewSqlPostStore(supplier, metrics)
@@ -169,6 +171,7 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 		os.Exit(EXIT_GENERIC_FAILURE)
 	}
 
+	supplier.stores.school.(*SqlSchoolStore).CreateIndexesIfNotExists()
 	supplier.stores.team.(*SqlTeamStore).CreateIndexesIfNotExists()
 	supplier.stores.channel.(*SqlChannelStore).CreateIndexesIfNotExists()
 	supplier.stores.post.(*SqlPostStore).CreateIndexesIfNotExists()
@@ -917,6 +920,10 @@ func (ss *SqlSupplier) LockToMaster() {
 
 func (ss *SqlSupplier) UnlockFromMaster() {
 	ss.lockedToMaster = false
+}
+
+func (ss *SqlSupplier) School() store.SchoolStore {
+	return ss.stores.school
 }
 
 func (ss *SqlSupplier) Team() store.TeamStore {

@@ -17,6 +17,10 @@ const (
 	SYSTEM_POST_ALL_PUBLIC_ROLE_ID   = "system_post_all_public"
 	SYSTEM_USER_ACCESS_TOKEN_ROLE_ID = "system_user_access_token"
 
+	SCHOOL_PARENT_ROLE_ID  = "school_guest"
+	SCHOOL_TEACHER_ROLE_ID = "school_user"
+	SCHOOL_ADMIN_ROLE_ID   = "school_admin"
+
 	TEAM_GUEST_ROLE_ID           = "team_guest"
 	TEAM_USER_ROLE_ID            = "team_user"
 	TEAM_ADMIN_ROLE_ID           = "team_admin"
