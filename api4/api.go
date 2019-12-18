@@ -113,10 +113,17 @@ type Routes struct {
 	TermsOfService *mux.Router // 'api/v4/terms_of_service
 	Groups         *mux.Router // 'api/v4/groups'
 
-	Schools *mux.Router // 'api/v4/schools'
-	School  *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}'
-	SchoolMembers        *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members'
-	SchoolMember         *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
+	Schools         *mux.Router // 'api/v4/schools'
+	School          *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}'
+	SchoolMembers   *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members'
+	SchoolMember    *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
+	SchoolsForUser  *mux.Router // 'api/v4/users/schools'
+	SchoolForUser   *mux.Router // 'api/v4/users/schools/{school_id:[A-Za-z0-9]+}'
+	Branches        *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches'
+	Branch          *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}'
+	BranchesForUser *mux.Router // 'api/v4/users/schools/branches'
+	Classes         *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}/classes'
+	Class           *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}/classes/{class_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -223,6 +230,14 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.School = api.BaseRoutes.Schools.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
 	api.BaseRoutes.SchoolMembers = api.BaseRoutes.School.PathPrefix("/members").Subrouter()
 	api.BaseRoutes.SchoolMember = api.BaseRoutes.SchoolMembers.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.SchoolsForUser = api.BaseRoutes.User.PathPrefix("/schools").Subrouter()
+	api.BaseRoutes.SchoolForUser = api.BaseRoutes.SchoolsForUser.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.Branches = api.BaseRoutes.School.PathPrefix("/branches").Subrouter()
+	api.BaseRoutes.Branch = api.BaseRoutes.Branches.PathPrefix("/{branch_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.Classes = api.BaseRoutes.Branch.PathPrefix("/classes").Subrouter()
+	api.BaseRoutes.Class = api.BaseRoutes.Classes.PathPrefix("/{class_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.InitUser()
 	api.InitBot()

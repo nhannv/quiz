@@ -1492,6 +1492,24 @@ func (s *ThemeSettings) SetDefaults() {
 	}
 }
 
+type SchoolSettings struct {
+	SchoolName          *string
+	MaxKidsPerSchool    *int
+	MaxUsersPerSchool   *int
+	MaxClassesPerSchool *int
+}
+
+func (s *SchoolSettings) SetDefaults() {
+
+	if s.SchoolName == nil || *s.SchoolName == "" {
+		s.SchoolName = NewString(TEAM_SETTINGS_DEFAULT_SITE_NAME)
+	}
+
+	if s.MaxKidsPerSchool == nil {
+		s.MaxKidsPerSchool = NewInt(TEAM_SETTINGS_DEFAULT_MAX_USERS_PER_TEAM)
+	}
+}
+
 type TeamSettings struct {
 	SiteName                                                  *string
 	MaxUsersPerTeam                                           *int

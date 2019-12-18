@@ -69,6 +69,7 @@ type User struct {
 	AuthService            string    `json:"auth_service"`
 	Email                  string    `json:"email"`
 	EmailVerified          bool      `json:"email_verified,omitempty"`
+	Phone                  string    `json:"phone"`
 	Nickname               string    `json:"nickname"`
 	FirstName              string    `json:"first_name"`
 	LastName               string    `json:"last_name"`
@@ -91,6 +92,17 @@ type User struct {
 	TermsOfServiceCreateAt int64     `db:"-" json:"terms_of_service_create_at,omitempty"`
 }
 
+type UserRegister struct {
+	Email      string `json:"email"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	SchoolName string `json:"school_name,omitempty"`
+	Phone      string `json:"phone,omitempty"`
+	IsSchool   bool   `json:"is_school"`
+}
+
 type UserUpdate struct {
 	Old *User
 	New *User
@@ -104,6 +116,7 @@ type UserPatch struct {
 	LastName    *string   `json:"last_name"`
 	Position    *string   `json:"position"`
 	Email       *string   `json:"email"`
+	Phone       *string   `json:"phone"`
 	Props       StringMap `json:"props,omitempty"`
 	NotifyProps StringMap `json:"notify_props,omitempty"`
 	Locale      *string   `json:"locale"`
@@ -139,7 +152,7 @@ func (r *ViewUsersRestrictions) Hash() string {
 		return ""
 	}
 	ids := append(r.Schools, r.Teams...)
-	ids  = append(ids, r.Channels...)
+	ids = append(ids, r.Channels...)
 	sort.Strings(ids)
 	hash := sha256.New()
 	hash.Write([]byte(strings.Join(ids, "")))
@@ -454,6 +467,10 @@ func (u *User) Patch(patch *UserPatch) {
 		u.Email = *patch.Email
 	}
 
+	if patch.Phone != nil {
+		u.Phone = *patch.Phone
+	}
+
 	if patch.Props != nil {
 		u.Props = patch.Props
 	}
@@ -634,6 +651,18 @@ func (u *User) IsGuest() bool {
 	return IsInRole(u.Roles, SYSTEM_GUEST_ROLE_ID)
 }
 
+func (u *User) IsSchoolAdmin() bool {
+	return IsInRole(u.Roles, SCHOOL_ADMIN_ROLE_ID)
+}
+
+func (u *User) IsTeacher() bool {
+	return IsInRole(u.Roles, SCHOOL_TEACHER_ROLE_ID)
+}
+
+func (u *User) IsParent() bool {
+	return IsInRole(u.Roles, SCHOOL_PARENT_ROLE_ID)
+}
+
 // Make sure you acually want to use this function. In context.go there are functions to check permissions
 // This function should not be used to check permissions.
 func (u *User) IsInRole(inRole string) bool {
@@ -672,6 +701,13 @@ func (u *User) IsSAMLUser() bool {
 
 func (u *User) GetPreferredTimezone() string {
 	return GetPreferredTimezone(u.Timezone)
+}
+
+// UserRegisterFromJson will decode the input and return a User
+func UserRegisterFromJson(data io.Reader) *UserRegister {
+	var user *UserRegister
+	json.NewDecoder(data).Decode(&user)
+	return user
 }
 
 // UserFromJson will decode the input and return a User

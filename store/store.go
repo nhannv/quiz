@@ -64,6 +64,19 @@ type SchoolStore interface {
 	Update(school *model.School) (*model.School, *model.AppError)
 	Get(id string) (*model.School, *model.AppError)
 	UpdateLastSchoolIconUpdate(schoolId string, curTime int64) *model.AppError
+	SaveMember(member *model.SchoolMember, maxUsersPerSchool int) (*model.SchoolMember, *model.AppError)
+	UpdateMember(member *model.SchoolMember) (*model.SchoolMember, *model.AppError)
+	GetMember(schoolId string, userId string) (*model.SchoolMember, *model.AppError)
+	GetActiveMemberCount(schoolId string, restrictions *model.ViewUsersRestrictions) (int64, *model.AppError)
+	GetBranches(schoolId string) ([]*model.Branch, *model.AppError)
+	GetBranch(branchId string) (*model.Branch, *model.AppError)
+	SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError)
+	RemoveBranch(branchId string) *model.AppError
+	GetClasses(schoolId string) ([]*model.Class, *model.AppError)
+	GetClass(classId string) (*model.Class, *model.AppError)
+	GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError)
+	SaveClass(class *model.Class) (*model.Class, *model.AppError)
+	RemoveClass(classId string) *model.AppError
 	ClearCaches()
 }
 

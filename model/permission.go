@@ -7,6 +7,8 @@ const (
 	PERMISSION_SCOPE_SYSTEM  = "system_scope"
 	PERMISSION_SCOPE_TEAM    = "team_scope"
 	PERMISSION_SCOPE_CHANNEL = "channel_scope"
+	PERMISSION_SCOPE_SCHOOL  = "school_scope"
+	PERMISSION_SCOPE_CLASS   = "class_scope"
 )
 
 type Permission struct {
@@ -16,6 +18,7 @@ type Permission struct {
 	Scope       string `json:"scope"`
 }
 
+var PERMISSION_MANAGE_SCHOOL *Permission
 var PERMISSION_INVITE_USER *Permission
 var PERMISSION_ADD_USER_TO_TEAM *Permission
 var PERMISSION_USE_SLASH_COMMANDS *Permission
@@ -99,6 +102,12 @@ var PERMISSION_MANAGE_SYSTEM *Permission
 var ALL_PERMISSIONS []*Permission
 
 func initializePermissions() {
+	PERMISSION_MANAGE_SCHOOL = &Permission{
+		"manage_school",
+		"authentication.permissions.manage_school.name",
+		"authentication.permissions.manage_school.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
 	PERMISSION_INVITE_USER = &Permission{
 		"invite_user",
 		"authentication.permissions.team_invite_user.name",
@@ -557,6 +566,7 @@ func initializePermissions() {
 	}
 
 	ALL_PERMISSIONS = []*Permission{
+		PERMISSION_MANAGE_SCHOOL,
 		PERMISSION_INVITE_USER,
 		PERMISSION_ADD_USER_TO_TEAM,
 		PERMISSION_USE_SLASH_COMMANDS,

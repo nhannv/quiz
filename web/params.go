@@ -25,6 +25,8 @@ const (
 type Params struct {
 	UserId                 string
 	SchoolId               string
+	BranchId               string
+	ClassId                string
 	TeamId                 string
 	InviteId               string
 	TokenId                string
@@ -89,6 +91,14 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, ok := props["school_id"]; ok {
 		params.SchoolId = val
+	}
+
+	if val, ok := props["branch_id"]; ok {
+		params.BranchId = val
+	}
+
+	if val, ok := props["class_id"]; ok {
+		params.ClassId = val
 	}
 
 	if val, ok := props["team_id"]; ok {

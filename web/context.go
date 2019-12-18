@@ -85,6 +85,10 @@ func (c *Context) IsSystemAdmin() bool {
 	return c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_SYSTEM)
 }
 
+func (c *Context) IsSchoolAdmin() bool {
+	return c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_SCHOOL)
+}
+
 func (c *Context) SessionRequired() {
 	if !*c.App.Config().ServiceSettings.EnableUserAccessTokens &&
 		c.App.Session.Props[model.SESSION_PROP_TYPE] == model.SESSION_TYPE_USER_ACCESS_TOKEN &&
@@ -236,6 +240,28 @@ func (c *Context) RequireSchoolId() *Context {
 
 	if len(c.Params.SchoolId) != 26 {
 		c.SetInvalidUrlParam("school_id")
+	}
+	return c
+}
+
+func (c *Context) RequireBranchId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.BranchId) != 26 {
+		c.SetInvalidUrlParam("branch_id")
+	}
+	return c
+}
+
+func (c *Context) RequireClassId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.ClassId) != 26 {
+		c.SetInvalidUrlParam("user_id")
 	}
 	return c
 }

@@ -16,6 +16,7 @@ import (
 )
 
 func (a *App) CreateSchool(school *model.School) (*model.School, *model.AppError) {
+	school.InviteId = ""
 	rschool, err := a.Srv.Store.School().Save(school)
 	if err != nil {
 		return nil, err
@@ -41,10 +42,9 @@ func (a *App) CreateSchoolWithUser(school *model.School, userId string) (*model.
 		return nil, err
 	}
 
-	// TODO default join user to school as an administrator
-	// if err = a.JoinUserToSchool(rschool, user, ""); err != nil {
-	// 	return nil, err
-	// }
+	if err = a.JoinUserToSchool(rschool, user, ""); err != nil {
+		return nil, err
+	}
 
 	return rschool, nil
 }
@@ -229,6 +229,130 @@ func (a *App) RemoveSchoolIcon(schoolId string) *model.AppError {
 	}
 
 	school.LastSchoolIconUpdate = 0
+
+	return nil
+}
+
+func (a *App) SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError) {
+	rbranch, err := a.Srv.Store.School().SaveBranch(branch)
+	if err != nil {
+		return nil, err
+	}
+
+	return rbranch, nil
+}
+
+func (a *App) GetBranches(schoolId string) ([]*model.Branch, *model.AppError) {
+	return a.Srv.Store.School().GetBranches(schoolId)
+}
+
+func (a *App) GetBranch(branchId string) (*model.Branch, *model.AppError) {
+	return a.Srv.Store.School().GetBranch(branchId)
+}
+
+func (a *App) RemoveBranch(branchId string) *model.AppError {
+	err := a.Srv.Store.School().RemoveBranch(branchId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) SaveClass(class *model.Class) (*model.Class, *model.AppError) {
+	rclass, err := a.Srv.Store.School().SaveClass(class)
+	if err != nil {
+		return nil, err
+	}
+
+	return rclass, nil
+}
+
+func (a *App) GetClasses(schoolId string) ([]*model.Class, *model.AppError) {
+	return a.Srv.Store.School().GetClasses(schoolId)
+}
+
+func (a *App) GetClass(classId string) (*model.Class, *model.AppError) {
+	return a.Srv.Store.School().GetClass(classId)
+}
+
+func (a *App) GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError) {
+	return a.Srv.Store.School().GetClassesByBranch(branchId)
+}
+
+func (a *App) RemoveClass(classId string) *model.AppError {
+	err := a.Srv.Store.School().RemoveClass(classId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Returns three values:
+// 1. a pointer to the school member, if successful
+// 2. a boolean: true if the user has a non-deleted school member for that school already, otherwise false.
+// 3. a pointer to an AppError if something went wrong.
+func (a *App) joinUserToSchool(school *model.School, user *model.User) (*model.SchoolMember, bool, *model.AppError) {
+	sm := &model.SchoolMember{
+		SchoolId:      school.Id,
+		UserId:        user.Id,
+		SchemeTeacher: user.IsTeacher(),
+		SchemeParent:  user.IsParent(),
+		SchemeAdmin:   user.IsSchoolAdmin(),
+	}
+
+	if school.Email == user.Email {
+		sm.SchemeAdmin = true
+	}
+
+	rsm, err := a.Srv.Store.School().GetMember(school.Id, user.Id)
+	if err != nil {
+		// Membership appears to be missing. Lets try to add.
+		var smr *model.SchoolMember
+		smr, err = a.Srv.Store.School().SaveMember(sm, 10) // TODO *a.Config().SchoolSettings.MaxUsersPerSchool)
+		if err != nil {
+			return nil, false, err
+		}
+		return smr, false, nil
+	}
+
+	// Membership already exists.  Check if deleted and update, otherwise do nothing
+	// Do nothing if already added
+	if rsm.DeleteAt == 0 {
+		return rsm, true, nil
+	}
+
+	membersCount, err := a.Srv.Store.School().GetActiveMemberCount(sm.SchoolId, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if membersCount >= 10 { // TODO int64(*a.Config().SchoolSettings.MaxUsersPerSchool) {
+		return nil, false, model.NewAppError("joinUserToSchool", "app.school.join_user_to_school.max_accounts.app_error", nil, "schoolId="+sm.SchoolId, http.StatusBadRequest)
+	}
+
+	member, err := a.Srv.Store.School().UpdateMember(sm)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return member, false, nil
+}
+
+func (a *App) JoinUserToSchool(school *model.School, user *model.User, userRequestorId string) *model.AppError {
+	_, alreadyAdded, err := a.joinUserToSchool(school, user)
+	if err != nil {
+		return err
+	}
+	if alreadyAdded {
+		return nil
+	}
+
+	if _, err := a.Srv.Store.User().UpdateUpdateAt(user.Id); err != nil {
+		return err
+	}
+
+	a.ClearSessionCacheForUser(user.Id)
+	a.InvalidateCacheForUser(user.Id)
 
 	return nil
 }

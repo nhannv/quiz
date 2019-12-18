@@ -152,14 +152,6 @@ func (o *School) IsValid() *AppError {
 		return NewAppError("School.IsValid", "model.school.is_valid.invite_id.app_error", nil, "id="+o.Id, http.StatusBadRequest)
 	}
 
-	if IsReservedSchoolName(o.Name) {
-		return NewAppError("School.IsValid", "model.school.is_valid.reserved.app_error", nil, "id="+o.Id, http.StatusBadRequest)
-	}
-
-	if !IsValidSchoolName(o.Name) {
-		return NewAppError("School.IsValid", "model.school.is_valid.characters.app_error", nil, "id="+o.Id, http.StatusBadRequest)
-	}
-
 	if len(o.ContactName) > SCHOOL_CONTACT_NAME_MAX_LENGTH {
 		return NewAppError("School.IsValid", "model.school.is_valid.contact.app_error", nil, "id="+o.Id, http.StatusBadRequest)
 	}
@@ -174,6 +166,10 @@ func (o *School) PreSave() {
 
 	o.CreateAt = GetMillis()
 	o.UpdateAt = o.CreateAt
+
+	if len(o.InviteId) == 0 {
+		o.InviteId = NewId()
+	}
 }
 
 func (o *School) PreUpdate() {
@@ -236,6 +232,7 @@ func CleanSchoolName(s string) string {
 
 func (o *School) Sanitize() {
 	o.Email = ""
+	o.InviteId = ""
 }
 
 func (t *School) Patch(patch *SchoolPatch) {

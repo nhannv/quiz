@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/mattermost/gorp"
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/store"
 )
@@ -165,6 +166,20 @@ func NewSqlSchoolStore(sqlStore SqlStore) store.SchoolStore {
 		tablem.ColMap("SchoolId").SetMaxSize(26)
 		tablem.ColMap("UserId").SetMaxSize(26)
 		tablem.ColMap("Roles").SetMaxSize(64)
+
+		tablb := db.AddTableWithName(model.Branch{}, "Branches").SetKeys(false, "Id")
+		tablb.ColMap("Name").SetMaxSize(128)
+		tablb.ColMap("Description").SetMaxSize(255)
+		tablb.ColMap("SchoolId").SetMaxSize(26)
+		tablb.ColMap("CreatorId").SetMaxSize(26)
+
+		tablc := db.AddTableWithName(model.Class{}, "Classes").SetKeys(false, "Id")
+		tablc.ColMap("Name").SetMaxSize(128)
+		tablc.ColMap("Description").SetMaxSize(255)
+		tablc.ColMap("SchoolId").SetMaxSize(26)
+		tablc.ColMap("BranchId").SetMaxSize(26)
+		tablc.ColMap("CreatorId").SetMaxSize(26)
+		tablc.ColMap("InviteId").SetMaxSize(32)
 	}
 
 	return s
@@ -181,6 +196,13 @@ func (s SqlSchoolStore) CreateIndexesIfNotExists() {
 	s.CreateIndexIfNotExists("idx_schoolmembers_school_id", "SchoolMembers", "SchoolId")
 	s.CreateIndexIfNotExists("idx_schoolmembers_user_id", "SchoolMembers", "UserId")
 	s.CreateIndexIfNotExists("idx_schoolmembers_delete_at", "SchoolMembers", "DeleteAt")
+
+	s.CreateIndexIfNotExists("idx_branches_school_id", "Branches", "SchoolId")
+	s.CreateIndexIfNotExists("idx_branches_delete_at", "Branches", "DeleteAt")
+
+	s.CreateIndexIfNotExists("idx_classes_school_id", "Classes", "SchoolId")
+	s.CreateIndexIfNotExists("idx_classes_branch_id", "Classes", "BranchId")
+	s.CreateIndexIfNotExists("idx_classes_delete_at", "Classes", "DeleteAt")
 }
 
 func (s SqlSchoolStore) Save(school *model.School) (*model.School, *model.AppError) {
@@ -299,9 +321,10 @@ func (s SqlSchoolStore) SaveMember(member *model.SchoolMember, maxUsersPerSchool
 	}
 	dbMember := NewSchoolMemberFromModel(member)
 
-	if maxUsersPerSchool >= 0 {
-		count, err := s.GetMaster().SelectInt(
-			`SELECT
+	// TODO check max kids per school
+	//if maxUsersPerSchool >= 0 {
+	_, err := s.GetMaster().SelectInt(
+		`SELECT
 					COUNT(0)
 				FROM
 					SchoolMembers
@@ -314,14 +337,14 @@ func (s SqlSchoolStore) SaveMember(member *model.SchoolMember, maxUsersPerSchool
 					AND SchoolMembers.DeleteAt = 0
 					AND Users.DeleteAt = 0`, map[string]interface{}{"SchoolId": member.SchoolId})
 
-		if err != nil {
-			return nil, model.NewAppError("SqlUserStore.Save", "store.sql_user.save.member_count.app_error", nil, "schoolId="+member.SchoolId+", "+err.Error(), http.StatusInternalServerError)
-		}
-
-		if count >= int64(maxUsersPerSchool) {
-			return nil, model.NewAppError("SqlUserStore.Save", "store.sql_user.save.max_accounts.app_error", nil, "schoolId="+member.SchoolId, http.StatusBadRequest)
-		}
+	if err != nil {
+		return nil, model.NewAppError("SqlUserStore.Save", "store.sql_user.save.member_count.app_error", nil, "schoolId="+member.SchoolId+", "+err.Error(), http.StatusInternalServerError)
 	}
+
+	//if count >= int64(maxUsersPerSchool) {
+	//	return nil, model.NewAppError("SqlUserStore.Save", "store.sql_user.save.max_accounts.app_error", nil, "schoolId="+member.SchoolId, http.StatusBadRequest)
+	//}
+	//}
 
 	if err := s.GetMaster().Insert(dbMember); err != nil {
 		if IsUniqueConstraintError(err, []string{"SchoolId", "schoolmembers_pkey", "PRIMARY"}) {
@@ -541,7 +564,7 @@ func applySchoolMemberViewRestrictionsFilter(query sq.SelectBuilder, schoolId st
 		return query
 	}
 
-	// If you have no access to schools or channels, return and empty result.
+	// If you have no access to schools or e, return and empty result.
 	if restrictions.Schools != nil && len(restrictions.Schools) == 0 {
 		return query.Where("1 = 0")
 	}
@@ -549,10 +572,6 @@ func applySchoolMemberViewRestrictionsFilter(query sq.SelectBuilder, schoolId st
 	schools := make([]interface{}, len(restrictions.Schools))
 	for i, v := range restrictions.Schools {
 		schools[i] = v
-	}
-	channels := make([]interface{}, len(restrictions.Channels))
-	for i, v := range restrictions.Channels {
-		channels[i] = v
 	}
 
 	resultQuery := query.Join("Users ru ON (SchoolMembers.UserId = ru.Id)")
@@ -568,7 +587,7 @@ func applySchoolMemberViewRestrictionsFilterForStats(query sq.SelectBuilder, sch
 		return query
 	}
 
-	// If you have no access to schools or channels, return and empty result.
+	// If you have no access to schools or branches, return and empty result.
 	if restrictions.Schools != nil && len(restrictions.Schools) == 0 {
 		return query.Where("1 = 0")
 	}
@@ -584,4 +603,160 @@ func applySchoolMemberViewRestrictionsFilterForStats(query sq.SelectBuilder, sch
 	}
 
 	return resultQuery
+}
+
+/// BRANCHES
+
+func (s SqlSchoolStore) GetBranches(schoolId string) ([]*model.Branch, *model.AppError) {
+	var branches []*model.Branch
+
+	_, err := s.GetReplica().Select(&branches, "SELECT * FROM Branches WHERE SchoolId = :SchoolId AND DeleteAt = 0", map[string]interface{}{"SchoolId": schoolId})
+	if err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.GetBranches", "store.sql_school.get_branches.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+	return branches, nil
+}
+
+func (s SqlSchoolStore) GetBranch(id string) (*model.Branch, *model.AppError) {
+	obj, err := s.GetReplica().Get(model.Branch{}, id)
+	if err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.Branch", "store.sql_school.get_branch.finding.app_error", nil, "id="+id+", "+err.Error(), http.StatusInternalServerError)
+	}
+	if obj == nil {
+		return nil, model.NewAppError("SqlSchoolStore.Branch", "store.sql_school.get_branch.find.app_error", nil, "id="+id, http.StatusNotFound)
+	}
+
+	return obj.(*model.Branch), nil
+}
+
+func (s SqlSchoolStore) SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError) {
+	if len(branch.Id) > 0 {
+		return nil, model.NewAppError("SqlSchoolStore.SaveBranch",
+			"store.sql_school.save_branch.existing.app_error", nil, "id="+branch.Id, http.StatusBadRequest)
+	}
+
+	branch.PreSave()
+
+	if err := branch.IsValid(); err != nil {
+		return nil, err
+	}
+
+	if err := s.GetMaster().Insert(branch); err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.SaveBranch", "store.sql_school.save_branch.app_error", nil, "id="+branch.Id+", "+err.Error(), http.StatusInternalServerError)
+	}
+	return branch, nil
+}
+
+// RemoveBranch records the given deleted and updated timestamp to the branch in question.
+func (s SqlSchoolStore) RemoveBranch(branchId string) *model.AppError {
+	now := model.GetMillis()
+
+	transaction, err := s.GetMaster().Begin()
+	if err != nil {
+		return model.NewAppError("SqlSchoolStore.SetDeleteAt", "store.sql_branch.set_delete_at.open_transaction.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+	defer finalizeTransaction(transaction)
+
+	appErr := s.setDeleteAtT(transaction, branchId, now, now)
+	if appErr != nil {
+		return appErr
+	}
+
+	if err := transaction.Commit(); err != nil {
+		return model.NewAppError("SqlSchoolStore.SetDeleteAt", "store.sql_branch.set_delete_at.commit_transaction.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
+func (s SqlSchoolStore) setDeleteAtT(transaction *gorp.Transaction, branchId string, deleteAt, updateAt int64) *model.AppError {
+	_, err := transaction.Exec("Update Branches SET DeleteAt = :DeleteAt, UpdateAt = :UpdateAt WHERE Id = :BranchId", map[string]interface{}{"DeleteAt": deleteAt, "UpdateAt": updateAt, "BranchId": branchId})
+	if err != nil {
+		return model.NewAppError("SqlSchoolStore.Delete", "store.sql_branch.delete.branch.app_error", nil, "id="+branchId+", err="+err.Error(), http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
+// Classes logics
+
+func (s SqlSchoolStore) GetClasses(schoolId string) ([]*model.Class, *model.AppError) {
+	var classes []*model.Class
+
+	_, err := s.GetReplica().Select(&classes, "SELECT * FROM Classes WHERE SchoolId = :SchoolId AND DeleteAt = 0", map[string]interface{}{"SchoolId": schoolId})
+	if err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.GetClasses", "store.sql_school.get_classes.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+	return classes, nil
+}
+
+func (s SqlSchoolStore) GetClass(id string) (*model.Class, *model.AppError) {
+	obj, err := s.GetReplica().Get(model.Class{}, id)
+	if err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.Class", "store.sql_school.get_class.finding.app_error", nil, "id="+id+", "+err.Error(), http.StatusInternalServerError)
+	}
+	if obj == nil {
+		return nil, model.NewAppError("SqlSchoolStore.Class", "store.sql_school.get_class.find.app_error", nil, "id="+id, http.StatusNotFound)
+	}
+
+	return obj.(*model.Class), nil
+}
+
+func (s SqlSchoolStore) GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError) {
+	var classes []*model.Class
+
+	_, err := s.GetReplica().Select(&classes, "SELECT * FROM Classes WHERE BranchId = :BranchId AND DeleteAt = 0", map[string]interface{}{"BranchId": branchId})
+	if err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.GetClasses", "store.sql_school.get_classes_by_branch.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+	return classes, nil
+}
+
+func (s SqlSchoolStore) SaveClass(class *model.Class) (*model.Class, *model.AppError) {
+	if len(class.Id) > 0 {
+		return nil, model.NewAppError("SqlSchoolStore.SaveClass",
+			"store.sql_school.save_class.existing.app_error", nil, "id="+class.Id, http.StatusBadRequest)
+	}
+
+	class.PreSave()
+
+	if err := class.IsValid(); err != nil {
+		return nil, err
+	}
+
+	if err := s.GetMaster().Insert(class); err != nil {
+		return nil, model.NewAppError("SqlSchoolStore.SaveClass", "store.sql_school.save_class.app_error", nil, "id="+class.Id+", "+err.Error(), http.StatusInternalServerError)
+	}
+	return class, nil
+}
+
+// RemoveClass records the given deleted and updated timestamp to the class in question.
+func (s SqlSchoolStore) RemoveClass(classId string) *model.AppError {
+	now := model.GetMillis()
+
+	transaction, err := s.GetMaster().Begin()
+	if err != nil {
+		return model.NewAppError("SqlSchoolStore.SetDeleteAt", "store.sql_class.set_delete_at.open_transaction.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+	defer finalizeTransaction(transaction)
+
+	appErr := s.setDeleteAtT(transaction, classId, now, now)
+	if appErr != nil {
+		return appErr
+	}
+
+	if err := transaction.Commit(); err != nil {
+		return model.NewAppError("SqlSchoolStore.SetDeleteAt", "store.sql_class.set_delete_at.commit_transaction.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
+func (s SqlSchoolStore) setDeleteClassAtT(transaction *gorp.Transaction, classId string, deleteAt, updateAt int64) *model.AppError {
+	_, err := transaction.Exec("Update Classes SET DeleteAt = :DeleteAt, UpdateAt = :UpdateAt WHERE Id = :ClassId", map[string]interface{}{"DeleteAt": deleteAt, "UpdateAt": updateAt, "ClassId": classId})
+	if err != nil {
+		return model.NewAppError("SqlSchoolStore.Delete", "store.sql_class.delete.class.app_error", nil, "id="+classId+", err="+err.Error(), http.StatusInternalServerError)
+	}
+
+	return nil
 }

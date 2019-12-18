@@ -30,6 +30,15 @@ func (api *API) InitSchool() {
 	api.BaseRoutes.School.Handle("/patch", api.ApiSessionRequired(patchSchool)).Methods("PUT")
 	// api.BaseRoutes.School.Handle("/regenerate_invite_id", api.ApiSessionRequired(regenerateSchoolInviteId)).Methods("POST")
 
+	api.BaseRoutes.Branches.Handle("", api.ApiSessionRequired(getBranches)).Methods("GET")
+	api.BaseRoutes.Branches.Handle("", api.ApiSessionRequired(addBranch)).Methods("POST")
+	api.BaseRoutes.Branch.Handle("", api.ApiSessionRequired(removeBranch)).Methods("DELETE")
+	api.BaseRoutes.Branch.Handle("", api.ApiSessionRequired(getBranch)).Methods("GET")
+
+	api.BaseRoutes.Classes.Handle("", api.ApiSessionRequired(getClasses)).Methods("GET")
+	api.BaseRoutes.Classes.Handle("", api.ApiSessionRequired(addClass)).Methods("POST")
+	api.BaseRoutes.Class.Handle("", api.ApiSessionRequired(removeClass)).Methods("DELETE")
+	api.BaseRoutes.Class.Handle("", api.ApiSessionRequired(getClass)).Methods("GET")
 }
 
 func createSchool(c *Context, w http.ResponseWriter, r *http.Request) {
@@ -141,4 +150,199 @@ func patchSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	c.LogAudit("")
 	w.Write([]byte(patchedSchool.ToJson()))
+}
+
+func getBranches(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	branches, err := c.App.GetBranches(c.Params.SchoolId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(model.BranchesToJson(branches)))
+}
+
+func getBranch(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireBranchId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	branch, err := c.App.GetBranch(c.Params.BranchId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(branch.ToJson()))
+}
+
+func addBranch(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId()
+	if c.Err != nil {
+		return
+	}
+
+	var err *model.AppError
+	branch := model.BranchFromJson(r.Body)
+	branch.SchoolId = c.Params.SchoolId
+
+	branch.CreatorId = c.App.Session.UserId
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, branch.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	result, err := c.App.SaveBranch(branch)
+
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(result.ToJson()))
+}
+
+func removeBranch(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireBranchId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	if err := c.App.RemoveBranch(c.Params.BranchId); err != nil {
+		c.Err = err
+		return
+	}
+
+	ReturnStatusOK(w)
+}
+
+// Classes api
+
+func getClasses(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_VIEW_TEAM) {
+		c.SetPermissionError(model.PERMISSION_VIEW_TEAM)
+		return
+	}
+
+	classes, err := c.App.GetClasses(c.Params.SchoolId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(model.ClassesToJson(classes)))
+}
+
+func getClass(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireClassId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	class, err := c.App.GetClass(c.Params.ClassId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(class.ToJson()))
+}
+
+func getClassesByBranch(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireBranchId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_VIEW_TEAM) {
+		c.SetPermissionError(model.PERMISSION_VIEW_TEAM)
+		return
+	}
+
+	classes, err := c.App.GetClassesByBranch(c.Params.BranchId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(model.ClassesToJson(classes)))
+}
+
+func addClass(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireBranchId()
+	if c.Err != nil {
+		return
+	}
+
+	var err *model.AppError
+	class := model.ClassFromJson(r.Body)
+	class.SchoolId = c.Params.SchoolId
+	class.BranchId = c.Params.BranchId
+
+	class.CreatorId = c.App.Session.UserId
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, class.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	result, err := c.App.SaveClass(class)
+
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(result.ToJson()))
+}
+
+func removeClass(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireSchoolId().RequireClassId()
+	if c.Err != nil {
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
+		return
+	}
+
+	if err := c.App.RemoveClass(c.Params.ClassId); err != nil {
+		c.Err = err
+		return
+	}
+
+	ReturnStatusOK(w)
 }

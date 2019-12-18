@@ -55,6 +55,8 @@ func (api *API) InitUser() {
 	api.BaseRoutes.User.Handle("/mfa", api.ApiSessionRequiredMfa(updateUserMfa)).Methods("PUT")
 	api.BaseRoutes.User.Handle("/mfa/generate", api.ApiSessionRequiredMfa(generateMfaSecret)).Methods("POST")
 
+	api.BaseRoutes.Users.Handle("/register", api.ApiHandler(register)).Methods("POST")
+
 	api.BaseRoutes.Users.Handle("/login", api.ApiHandler(login)).Methods("POST")
 	api.BaseRoutes.Users.Handle("/login/switch", api.ApiHandler(switchAccountType)).Methods("POST")
 	api.BaseRoutes.Users.Handle("/logout", api.ApiHandler(logout)).Methods("POST")
@@ -77,6 +79,47 @@ func (api *API) InitUser() {
 	api.BaseRoutes.Users.Handle("/tokens/revoke", api.ApiSessionRequired(revokeUserAccessToken)).Methods("POST")
 	api.BaseRoutes.Users.Handle("/tokens/disable", api.ApiSessionRequired(disableUserAccessToken)).Methods("POST")
 	api.BaseRoutes.Users.Handle("/tokens/enable", api.ApiSessionRequired(enableUserAccessToken)).Methods("POST")
+}
+
+func register(c *Context, w http.ResponseWriter, r *http.Request) {
+	userRegister := model.UserRegisterFromJson(r.Body)
+	if userRegister == nil {
+		c.SetInvalidParam("user")
+		return
+	}
+
+	user := &model.User{}
+
+	user.Username = userRegister.Username
+	user.Password = userRegister.Password
+	user.FirstName = userRegister.FirstName
+	user.LastName = userRegister.LastName
+	user.Phone = userRegister.Phone
+	user.Email = userRegister.Email
+
+	if userRegister.IsSchool {
+		user.SanitizeInput(c.IsSchoolAdmin())
+	}
+
+	var ruser *model.User
+	var err *model.AppError
+
+	ruser, err = c.App.CreateUserFromSignup(user)
+
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	_, err = c.App.CreateSchoolWithUser(&model.School{
+		Name:        userRegister.SchoolName,
+		ContactName: userRegister.FirstName + userRegister.LastName,
+		Phone:       userRegister.Phone,
+		Email: 			userRegister.Email,
+	}, ruser.Id)
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(ruser.ToJson()))
 }
 
 func createUser(c *Context, w http.ResponseWriter, r *http.Request) {
