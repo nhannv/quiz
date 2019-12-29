@@ -109,16 +109,9 @@ func (a *App) GetSchool(schoolId string) (*model.School, *model.AppError) {
 }
 
 func (a *App) SanitizeSchool(session model.Session, school *model.School) *model.School {
-	// TODO authorization
-	// if a.SessionHasPermissionToSchool(session, school.Id, model.PERMISSION_MANAGE_TEAM) {
-	// 	return school
-	// }
-
-	// if a.SessionHasPermissionToSchool(session, school.Id, model.PERMISSION_INVITE_USER) {
-	// 	school.Sanitize()
-	// 	return school
-	// }
-
+	if a.SessionHasPermissionToSchool(session, school.Id, model.PERMISSION_MANAGE_SCHOOL) {
+		return school
+	}
 	school.Sanitize()
 
 	return school
@@ -285,6 +278,10 @@ func (a *App) RemoveClass(classId string) *model.AppError {
 		return err
 	}
 	return nil
+}
+
+func (a *App) GetSchoolsForUser(userId string) ([]*model.School, *model.AppError) {
+	return a.Srv.Store.School().GetSchoolsByUserId(userId)
 }
 
 // Returns three values:

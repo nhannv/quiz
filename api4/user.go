@@ -88,6 +88,11 @@ func register(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userRegister.IsSchool && userRegister.SchoolName == "" {
+		c.Err = model.NewAppError("Register", "api.user.register.school_name_invalid.app_error", nil, "", http.StatusBadRequest)
+		return
+	}
+
 	user := &model.User{}
 
 	user.Username = userRegister.Username
@@ -98,25 +103,27 @@ func register(c *Context, w http.ResponseWriter, r *http.Request) {
 	user.Email = userRegister.Email
 
 	if userRegister.IsSchool {
-		user.SanitizeInput(c.IsSchoolAdmin())
+		user.SanitizeInput(true)
 	}
 
 	var ruser *model.User
 	var err *model.AppError
 
-	ruser, err = c.App.CreateUserFromSignup(user)
+	ruser, err = c.App.Register(user, userRegister.IsSchool)
 
 	if err != nil {
 		c.Err = err
 		return
 	}
 
-	_, err = c.App.CreateSchoolWithUser(&model.School{
-		Name:        userRegister.SchoolName,
-		ContactName: userRegister.FirstName + userRegister.LastName,
-		Phone:       userRegister.Phone,
-		Email: 			userRegister.Email,
-	}, ruser.Id)
+	if userRegister.IsSchool {
+		_, err = c.App.CreateSchoolWithUser(&model.School{
+			Name:        userRegister.SchoolName,
+			ContactName: userRegister.FirstName + userRegister.LastName,
+			Phone:       userRegister.Phone,
+			Email:       userRegister.Email,
+		}, ruser.Id)
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(ruser.ToJson()))
@@ -1442,7 +1449,13 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	c.LogAuditWithUserId(user.Id, "authenticated")
 
-	err = c.App.DoLogin(w, r, user, deviceId)
+	schools, err := c.App.GetSchoolsForUser(user.Id)
+	if err != nil || len(schools) <= 0 {
+		c.Err = model.NewAppError("login", "api.user.login.invalid_credentials_email", nil, "", http.StatusUnauthorized)
+		return
+	}
+
+	err = c.App.DoLogin(w, r, user, deviceId, schools[0].Id)
 	if err != nil {
 		c.Err = err
 		return
@@ -1450,6 +1463,8 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	c.LogAuditWithUserId(user.Id, "success")
 
+	user.Schools = schools
+	
 	if r.Header.Get(model.HEADER_REQUESTED_WITH) == model.HEADER_REQUESTED_WITH_XML {
 		c.App.AttachSessionCookies(w, r)
 	}

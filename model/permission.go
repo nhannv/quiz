@@ -19,6 +19,9 @@ type Permission struct {
 }
 
 var PERMISSION_MANAGE_SCHOOL *Permission
+var PERMISSION_CREATE_KID *Permission
+var PERMISSION_MANAGE_KID *Permission
+var PERMISSION_MANAGE_CLASS *Permission
 var PERMISSION_INVITE_USER *Permission
 var PERMISSION_ADD_USER_TO_TEAM *Permission
 var PERMISSION_USE_SLASH_COMMANDS *Permission
@@ -106,6 +109,24 @@ func initializePermissions() {
 		"manage_school",
 		"authentication.permissions.manage_school.name",
 		"authentication.permissions.manage_school.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
+	PERMISSION_CREATE_KID = &Permission{
+		"create_kid",
+		"authentication.permissions.create_kid.name",
+		"authentication.permissions.create_kid.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
+	PERMISSION_MANAGE_KID = &Permission{
+		"manage_kid",
+		"authentication.permissions.manage_kid.name",
+		"authentication.permissions.manage_kid.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
+	PERMISSION_MANAGE_CLASS = &Permission{
+		"manage_class",
+		"authentication.permissions.manage_class.name",
+		"authentication.permissions.manage_class.description",
 		PERMISSION_SCOPE_SCHOOL,
 	}
 	PERMISSION_INVITE_USER = &Permission{
@@ -567,6 +588,9 @@ func initializePermissions() {
 
 	ALL_PERMISSIONS = []*Permission{
 		PERMISSION_MANAGE_SCHOOL,
+		PERMISSION_CREATE_KID,
+		PERMISSION_MANAGE_KID,
+		PERMISSION_MANAGE_CLASS,
 		PERMISSION_INVITE_USER,
 		PERMISSION_ADD_USER_TO_TEAM,
 		PERMISSION_USE_SLASH_COMMANDS,

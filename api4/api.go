@@ -119,11 +119,21 @@ type Routes struct {
 	SchoolMember    *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
 	SchoolsForUser  *mux.Router // 'api/v4/users/schools'
 	SchoolForUser   *mux.Router // 'api/v4/users/schools/{school_id:[A-Za-z0-9]+}'
-	Branches        *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches'
-	Branch          *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}'
+	Branches        *mux.Router // 'api/v4/branches'
+	Branch          *mux.Router // 'api/v4/branches/{branch_id:[A-Za-z0-9]+}'
 	BranchesForUser *mux.Router // 'api/v4/users/schools/branches'
-	Classes         *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}/classes'
-	Class           *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}/branches/{branch_id:[A-Za-z0-9]+}/classes/{class_id:[A-Za-z0-9]+}'
+	Classes         *mux.Router // 'api/v4/classes'
+	Class           *mux.Router // 'api/v4/classes/{class_id:[A-Za-z0-9]+}'
+	Kids            *mux.Router // 'api/v4/kids'
+	Kid             *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}'
+	KidGuardians    *mux.Router // 'api/v4/kids/guardians'
+	KidGuardian     *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}/guardians/{user_id:[A-Za-z0-9_-]+}'
+	Schedules       *mux.Router // 'api/v4/schedules'
+	Schedule        *mux.Router // 'api/v4/schedules/{schedule_id:[A-Za-z0-9]+}'
+	Menus           *mux.Router // 'api/v4/menus'
+	Menu            *mux.Router // 'api/v4/menus/{menu_id:[A-Za-z0-9]+}'
+	Events          *mux.Router // 'api/v4/events'
+	Event           *mux.Router // 'api/v4/events/{event_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -233,11 +243,26 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 
 	api.BaseRoutes.SchoolsForUser = api.BaseRoutes.User.PathPrefix("/schools").Subrouter()
 	api.BaseRoutes.SchoolForUser = api.BaseRoutes.SchoolsForUser.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.Branches = api.BaseRoutes.School.PathPrefix("/branches").Subrouter()
+
+	api.BaseRoutes.Branches = api.BaseRoutes.ApiRoot.PathPrefix("/branches").Subrouter()
 	api.BaseRoutes.Branch = api.BaseRoutes.Branches.PathPrefix("/{branch_id:[A-Za-z0-9]+}").Subrouter()
 
-	api.BaseRoutes.Classes = api.BaseRoutes.Branch.PathPrefix("/classes").Subrouter()
+	api.BaseRoutes.Classes = api.BaseRoutes.ApiRoot.PathPrefix("/classes").Subrouter()
 	api.BaseRoutes.Class = api.BaseRoutes.Classes.PathPrefix("/{class_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.Kids = api.BaseRoutes.ApiRoot.PathPrefix("/kids").Subrouter()
+	api.BaseRoutes.Kid = api.BaseRoutes.Kids.PathPrefix("/{kid_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.KidGuardians = api.BaseRoutes.Kid.PathPrefix("/parents").Subrouter()
+	api.BaseRoutes.KidGuardian = api.BaseRoutes.KidGuardians.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.Schedules = api.BaseRoutes.Class.PathPrefix("/schedules").Subrouter()
+	api.BaseRoutes.Schedule = api.BaseRoutes.Schedules.PathPrefix("/{schedule_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.Menus = api.BaseRoutes.Class.PathPrefix("/menus").Subrouter()
+	api.BaseRoutes.Menu = api.BaseRoutes.Schedules.PathPrefix("/{menu_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.Events = api.BaseRoutes.Class.PathPrefix("/events").Subrouter()
+	api.BaseRoutes.Event = api.BaseRoutes.Events.PathPrefix("/{event_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.InitUser()
 	api.InitBot()
@@ -273,6 +298,10 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.InitGroup()
 	api.InitAction()
 	api.InitSchool()
+	api.InitKid()
+	api.InitSchedule()
+	api.InitMenu()
+	api.InitEvent()
 
 	root.Handle("/api/v4/{anything:.*}", http.HandlerFunc(api.Handle404))
 

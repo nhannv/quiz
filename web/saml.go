@@ -134,7 +134,7 @@ func completeSaml(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	c.LogAuditWithUserId(user.Id, "obtained user")
 
-	err = c.App.DoLogin(w, r, user, "")
+	err = c.App.DoLogin(w, r, user, "", "")
 	if err != nil {
 		c.Err = err
 		return

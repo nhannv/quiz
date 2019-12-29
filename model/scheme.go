@@ -14,25 +14,29 @@ const (
 	SCHEME_DISPLAY_NAME_MAX_LENGTH = 128
 	SCHEME_NAME_MAX_LENGTH         = 64
 	SCHEME_DESCRIPTION_MAX_LENGTH  = 1024
+	SCHEME_SCOPE_SCHOOL            = "school"
 	SCHEME_SCOPE_TEAM              = "team"
 	SCHEME_SCOPE_CHANNEL           = "channel"
 )
 
 type Scheme struct {
-	Id                      string `json:"id"`
-	Name                    string `json:"name"`
-	DisplayName             string `json:"display_name"`
-	Description             string `json:"description"`
-	CreateAt                int64  `json:"create_at"`
-	UpdateAt                int64  `json:"update_at"`
-	DeleteAt                int64  `json:"delete_at"`
-	Scope                   string `json:"scope"`
-	DefaultTeamAdminRole    string `json:"default_team_admin_role"`
-	DefaultTeamUserRole     string `json:"default_team_user_role"`
-	DefaultChannelAdminRole string `json:"default_channel_admin_role"`
-	DefaultChannelUserRole  string `json:"default_channel_user_role"`
-	DefaultTeamGuestRole    string `json:"default_team_guest_role"`
-	DefaultChannelGuestRole string `json:"default_channel_guest_role"`
+	Id                       string `json:"id"`
+	Name                     string `json:"name"`
+	DisplayName              string `json:"display_name"`
+	Description              string `json:"description"`
+	CreateAt                 int64  `json:"create_at"`
+	UpdateAt                 int64  `json:"update_at"`
+	DeleteAt                 int64  `json:"delete_at"`
+	Scope                    string `json:"scope"`
+	DefaultSchoolAdminRole   string `json:"default_school_admin_role"`
+	DefaultSchoolParentRole  string `json:"default_school_parent_role"`
+	DefaultSchoolTeacherRole string `json:"default_school_teacher_role"`
+	DefaultTeamAdminRole     string `json:"default_team_admin_role"`
+	DefaultTeamUserRole      string `json:"default_team_user_role"`
+	DefaultChannelAdminRole  string `json:"default_channel_admin_role"`
+	DefaultChannelUserRole   string `json:"default_channel_user_role"`
+	DefaultTeamGuestRole     string `json:"default_team_guest_role"`
+	DefaultChannelGuestRole  string `json:"default_channel_guest_role"`
 }
 
 type SchemePatch struct {
@@ -47,31 +51,37 @@ type SchemeIDPatch struct {
 
 // SchemeConveyor is used for importing and exporting a Scheme and its associated Roles.
 type SchemeConveyor struct {
-	Name         string  `json:"name"`
-	DisplayName  string  `json:"display_name"`
-	Description  string  `json:"description"`
-	Scope        string  `json:"scope"`
-	TeamAdmin    string  `json:"default_team_admin_role"`
-	TeamUser     string  `json:"default_team_user_role"`
-	TeamGuest    string  `json:"default_team_guest_role"`
-	ChannelAdmin string  `json:"default_channel_admin_role"`
-	ChannelUser  string  `json:"default_channel_user_role"`
-	ChannelGuest string  `json:"default_channel_guest_role"`
-	Roles        []*Role `json:"roles"`
+	Name          string  `json:"name"`
+	DisplayName   string  `json:"display_name"`
+	Description   string  `json:"description"`
+	Scope         string  `json:"scope"`
+	SchoolAdmin   string  `json:"default_school_admin_role"`
+	SchoolParent  string  `json:"default_school_parent_role"`
+	SchoolTeacher string  `json:"default_school_teacher_role"`
+	TeamAdmin     string  `json:"default_team_admin_role"`
+	TeamUser      string  `json:"default_team_user_role"`
+	TeamGuest     string  `json:"default_team_guest_role"`
+	ChannelAdmin  string  `json:"default_channel_admin_role"`
+	ChannelUser   string  `json:"default_channel_user_role"`
+	ChannelGuest  string  `json:"default_channel_guest_role"`
+	Roles         []*Role `json:"roles"`
 }
 
 func (sc *SchemeConveyor) Scheme() *Scheme {
 	return &Scheme{
-		DisplayName:             sc.DisplayName,
-		Name:                    sc.Name,
-		Description:             sc.Description,
-		Scope:                   sc.Scope,
-		DefaultTeamAdminRole:    sc.TeamAdmin,
-		DefaultTeamUserRole:     sc.TeamUser,
-		DefaultTeamGuestRole:    sc.TeamGuest,
-		DefaultChannelAdminRole: sc.ChannelAdmin,
-		DefaultChannelUserRole:  sc.ChannelUser,
-		DefaultChannelGuestRole: sc.ChannelGuest,
+		DisplayName:              sc.DisplayName,
+		Name:                     sc.Name,
+		Description:              sc.Description,
+		Scope:                    sc.Scope,
+		DefaultSchoolAdminRole:   sc.SchoolAdmin,
+		DefaultSchoolParentRole:  sc.SchoolParent,
+		DefaultSchoolTeacherRole: sc.SchoolTeacher,
+		DefaultTeamAdminRole:     sc.TeamAdmin,
+		DefaultTeamUserRole:      sc.TeamUser,
+		DefaultTeamGuestRole:     sc.TeamGuest,
+		DefaultChannelAdminRole:  sc.ChannelAdmin,
+		DefaultChannelUserRole:   sc.ChannelUser,
+		DefaultChannelGuestRole:  sc.ChannelGuest,
 	}
 }
 
@@ -143,6 +153,20 @@ func (scheme *Scheme) IsValidForCreate() bool {
 
 	if !IsValidRoleName(scheme.DefaultChannelGuestRole) {
 		return false
+	}
+
+	if scheme.Scope == SCHEME_SCOPE_SCHOOL {
+		if !IsValidRoleName(scheme.DefaultSchoolAdminRole) {
+			return false
+		}
+
+		if !IsValidRoleName(scheme.DefaultSchoolParentRole) {
+			return false
+		}
+
+		if !IsValidRoleName(scheme.DefaultSchoolTeacherRole) {
+			return false
+		}
 	}
 
 	if scheme.Scope == SCHEME_SCOPE_TEAM {

@@ -34,6 +34,19 @@ func (a *App) SessionHasPermissionToSchool(session model.Session, schoolId strin
 	return a.RolesGrantPermission(session.GetUserRoles(), permission.Id)
 }
 
+func (a *App) SessionHasPermissionToKid(session model.Session, kidId string, permission *model.Permission) bool {
+	if kidId == "" {
+		return false
+	}
+
+	kidGuardian := session.GetParentByKidId(kidId)
+	if kidGuardian != nil {
+		return true
+	}
+
+	return false
+}
+
 func (a *App) SessionHasPermissionToTeam(session model.Session, teamId string, permission *model.Permission) bool {
 	if teamId == "" {
 		return false

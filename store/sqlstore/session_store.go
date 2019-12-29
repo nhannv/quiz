@@ -28,6 +28,7 @@ func NewSqlSessionStore(sqlStore SqlStore) store.SessionStore {
 		table.ColMap("Id").SetMaxSize(26)
 		table.ColMap("Token").SetMaxSize(26)
 		table.ColMap("UserId").SetMaxSize(26)
+		table.ColMap("SchoolId").SetMaxSize(26)
 		table.ColMap("DeviceId").SetMaxSize(512)
 		table.ColMap("Roles").SetMaxSize(64)
 		table.ColMap("Props").SetMaxSize(1000)
@@ -58,6 +59,13 @@ func (me SqlSessionStore) Save(session *model.Session) (*model.Session, *model.A
 		close(tcs)
 	}()
 
+	scs := make(chan store.StoreResult, 1)
+	go func() {
+		schools, err := me.School().GetSchoolsForUser(session.UserId)
+		scs <- store.StoreResult{Data: schools, Err: err}
+		close(scs)
+	}()
+
 	if err := me.GetMaster().Insert(session); err != nil {
 		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+err.Error(), http.StatusInternalServerError)
 	}
@@ -73,6 +81,20 @@ func (me SqlSessionStore) Save(session *model.Session) (*model.Session, *model.A
 	for _, tm := range tempMembers {
 		if tm.DeleteAt == 0 {
 			session.TeamMembers = append(session.TeamMembers, tm)
+		}
+	}
+
+	rscs := <-scs
+
+	if rscs.Err != nil {
+		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+rscs.Err.Error(), http.StatusInternalServerError)
+	}
+
+	tempSchoolMembers := rscs.Data.([]*model.SchoolMember)
+	session.SchoolMembers = make([]*model.SchoolMember, 0, len(tempSchoolMembers))
+	for _, sm := range tempSchoolMembers {
+		if sm.DeleteAt == 0 {
+			session.SchoolMembers = append(session.SchoolMembers, sm)
 		}
 	}
 
@@ -97,6 +119,18 @@ func (me SqlSessionStore) Get(sessionIdOrToken string) (*model.Session, *model.A
 	for _, tm := range tempMembers {
 		if tm.DeleteAt == 0 {
 			sessions[0].TeamMembers = append(sessions[0].TeamMembers, tm)
+		}
+	}
+
+	// Add schools to session
+	tempSchoolMembers, err := me.School().GetSchoolsForUser(sessions[0].UserId)
+	if err != nil {
+		return nil, model.NewAppError("SqlSessionStore.Get", "store.sql_session.get.app_error", nil, "sessionIdOrToken="+sessionIdOrToken+", "+err.Error(), http.StatusInternalServerError)
+	}
+	sessions[0].SchoolMembers = make([]*model.SchoolMember, 0, len(tempSchoolMembers))
+	for _, sm := range tempSchoolMembers {
+		if sm.DeleteAt == 0 {
+			sessions[0].SchoolMembers = append(sessions[0].SchoolMembers, sm)
 		}
 	}
 	return session, nil

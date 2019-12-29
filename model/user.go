@@ -90,6 +90,7 @@ type User struct {
 	BotDescription         string    `db:"-" json:"bot_description,omitempty"`
 	TermsOfServiceId       string    `db:"-" json:"terms_of_service_id,omitempty"`
 	TermsOfServiceCreateAt int64     `db:"-" json:"terms_of_service_create_at,omitempty"`
+	Schools []*School     `db:"-" json:"schools,omitempty"`
 }
 
 type UserRegister struct {

@@ -47,6 +47,9 @@ func (a *App) CreateScheme(scheme *model.Scheme) (*model.Scheme, *model.AppError
 	}
 
 	// Clear any user-provided values for trusted properties.
+	scheme.DefaultSchoolAdminRole = ""
+	scheme.DefaultSchoolTeacherRole = ""
+	scheme.DefaultSchoolParentRole = ""
 	scheme.DefaultTeamAdminRole = ""
 	scheme.DefaultTeamUserRole = ""
 	scheme.DefaultTeamGuestRole = ""

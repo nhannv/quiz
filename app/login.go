@@ -110,7 +110,7 @@ func (a *App) GetUserForLogin(id, loginId string) (*model.User, *model.AppError)
 	return nil, model.NewAppError("GetUserForLogin", "store.sql_user.get_for_login.app_error", nil, "", http.StatusBadRequest)
 }
 
-func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string) *model.AppError {
+func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string, schoolId string) *model.AppError {
 	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
 		var rejectionReason string
 		pluginContext := a.PluginContext()
@@ -124,7 +124,7 @@ func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, 
 		}
 	}
 
-	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceId, IsOAuth: false}
+	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceId, SchoolId: schoolId, IsOAuth: false}
 	session.GenerateCSRF()
 
 	if len(deviceId) > 0 {

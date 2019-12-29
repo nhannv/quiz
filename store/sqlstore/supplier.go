@@ -69,6 +69,10 @@ const (
 
 type SqlSupplierStores struct {
 	school               store.SchoolStore
+	kid                  store.KidStore
+	schedule             store.ScheduleStore
+	menu                 store.MenuStore
+	event                store.EventStore
 	team                 store.TeamStore
 	channel              store.ChannelStore
 	post                 store.PostStore
@@ -125,6 +129,10 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	supplier.initConnection()
 
 	supplier.stores.school = NewSqlSchoolStore(supplier)
+	supplier.stores.kid = NewSqlKidStore(supplier)
+	supplier.stores.schedule = NewSqlScheduleStore(supplier)
+	supplier.stores.menu = NewSqlMenuStore(supplier)
+	supplier.stores.event = NewSqlEventStore(supplier)
 	supplier.stores.team = NewSqlTeamStore(supplier)
 	supplier.stores.channel = NewSqlChannelStore(supplier, metrics)
 	supplier.stores.post = NewSqlPostStore(supplier, metrics)
@@ -172,6 +180,10 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	}
 
 	supplier.stores.school.(*SqlSchoolStore).CreateIndexesIfNotExists()
+	supplier.stores.kid.(*SqlKidStore).CreateIndexesIfNotExists()
+	supplier.stores.schedule.(*SqlScheduleStore).CreateIndexesIfNotExists()
+	supplier.stores.menu.(*SqlMenuStore).CreateIndexesIfNotExists()
+	supplier.stores.event.(*SqlEventStore).CreateIndexesIfNotExists()
 	supplier.stores.team.(*SqlTeamStore).CreateIndexesIfNotExists()
 	supplier.stores.channel.(*SqlChannelStore).CreateIndexesIfNotExists()
 	supplier.stores.post.(*SqlPostStore).CreateIndexesIfNotExists()
@@ -924,6 +936,22 @@ func (ss *SqlSupplier) UnlockFromMaster() {
 
 func (ss *SqlSupplier) School() store.SchoolStore {
 	return ss.stores.school
+}
+
+func (ss *SqlSupplier) Kid() store.KidStore {
+	return ss.stores.kid
+}
+
+func (ss *SqlSupplier) Schedule() store.ScheduleStore {
+	return ss.stores.schedule
+}
+
+func (ss *SqlSupplier) Menu() store.MenuStore {
+	return ss.stores.menu
+}
+
+func (ss *SqlSupplier) Event() store.EventStore {
+	return ss.stores.event
 }
 
 func (ss *SqlSupplier) Team() store.TeamStore {

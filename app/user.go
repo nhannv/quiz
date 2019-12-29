@@ -154,6 +154,30 @@ func (a *App) CreateUserAsAdmin(user *model.User) (*model.User, *model.AppError)
 	return ruser, nil
 }
 
+func (a *App) CreateUserFromRegister(user *model.User, isSchool bool) (*model.User, *model.AppError) {
+	if err := a.IsUserSignUpAllowed(); err != nil {
+		return nil, err
+	}
+
+	if !a.IsFirstUserAccount() && !*a.Config().TeamSettings.EnableOpenServer {
+		err := model.NewAppError("CreateUserFromSignup", "api.user.create_user.no_open_server", nil, "email="+user.Email, http.StatusForbidden)
+		return nil, err
+	}
+
+	user.EmailVerified = false
+
+	ruser, err := a.Register(user, isSchool)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.SendWelcomeEmail(ruser.Id, ruser.Email, ruser.EmailVerified, ruser.Locale, a.GetSiteURL()); err != nil {
+		mlog.Error("Failed to send welcome email on create user from signup", mlog.Err(err))
+	}
+
+	return ruser, nil
+}
+
 func (a *App) CreateUserFromSignup(user *model.User) (*model.User, *model.AppError) {
 	if err := a.IsUserSignUpAllowed(); err != nil {
 		return nil, err
@@ -235,6 +259,12 @@ func (a *App) indexUserFromId(userId string) *model.AppError {
 	return a.indexUser(user)
 }
 
+// Register creates a user and sets several fields of the returned User struct to
+// their zero values.
+func (a *App) Register(user *model.User, isSchool bool) (*model.User, *model.AppError) {
+	return a.createSchoolUserOrGuest(user, false)
+}
+
 // CreateUser creates a user and sets several fields of the returned User struct to
 // their zero values.
 func (a *App) CreateUser(user *model.User) (*model.User, *model.AppError) {
@@ -245,6 +275,46 @@ func (a *App) CreateUser(user *model.User) (*model.User, *model.AppError) {
 // their zero values.
 func (a *App) CreateGuest(user *model.User) (*model.User, *model.AppError) {
 	return a.createUserOrGuest(user, true)
+}
+
+func (a *App) createSchoolUserOrGuest(user *model.User, guest bool) (*model.User, *model.AppError) {
+	user.Roles = model.SCHOOL_ADMIN_ROLE_ID
+	if guest {
+		user.Roles = model.SYSTEM_GUEST_ROLE_ID
+	}
+
+	if _, ok := utils.GetSupportedLocales()[user.Locale]; !ok {
+		user.Locale = *a.Config().LocalizationSettings.DefaultClientLocale
+	}
+
+	ruser, err := a.createUser(user)
+	if err != nil {
+		return nil, err
+	}
+	// This message goes to everyone, so the teamId, channelId and userId are irrelevant
+	message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_NEW_USER, "", "", "", nil)
+	message.Add("user_id", ruser.Id)
+	a.Publish(message)
+
+	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
+		a.Srv.Go(func() {
+			pluginContext := a.PluginContext()
+			pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
+				hooks.UserHasBeenCreated(pluginContext, user)
+				return true
+			}, plugin.UserHasBeenCreatedId)
+		})
+	}
+
+	if a.IsESIndexingEnabled() {
+		a.Srv.Go(func() {
+			if err := a.indexUser(user); err != nil {
+				mlog.Error("Encountered error indexing user", mlog.String("user_id", user.Id), mlog.Err(err))
+			}
+		})
+	}
+
+	return ruser, nil
 }
 
 func (a *App) createUserOrGuest(user *model.User, guest bool) (*model.User, *model.AppError) {

@@ -13,9 +13,11 @@ require (
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/disintegration/imaging v1.6.1
 	github.com/dyatlov/go-opengraph v0.0.0-20180429202543-816b6608b3c8
-	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-gorp/gorp v2.0.0+incompatible // indirect
+	github.com/go-ini/ini v1.51.1 // indirect
+	github.com/go-ldap/ldap v3.0.3+incompatible // indirect
+	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.1.1 // indirect
@@ -45,14 +47,17 @@ require (
 	github.com/mattermost/go-i18n v1.11.0
 	github.com/mattermost/gorp v2.0.1-0.20190301154413-3b31e9a39d05+incompatible
 	github.com/mattermost/ldap v3.0.4+incompatible
+	github.com/mattermost/mattermost-server v5.11.1+incompatible // indirect
 	github.com/mattermost/rsc v0.0.0-20160330161541-bbaefb05eaa0
 	github.com/mattermost/viper v1.0.4
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/miekg/dns v1.1.19 // indirect
+	github.com/minio/minio-go v6.0.14+incompatible // indirect
 	github.com/minio/minio-go/v6 v6.0.40
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/muesli/smartcrop v0.3.0 // indirect
+	github.com/nhannv/mattermost-server v5.11.1+incompatible // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/olivere/elastic v6.2.23+incompatible // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
@@ -99,6 +104,7 @@ require (
 	gopkg.in/ini.v1 v1.48.0 // indirect
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/olivere/elastic.v5 v5.0.83 // indirect
 	gopkg.in/olivere/elastic.v6 v6.2.23
 	gopkg.in/yaml.v2 v2.2.3
 	willnorris.com/go/imageproxy v0.9.0

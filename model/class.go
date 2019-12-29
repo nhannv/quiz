@@ -139,6 +139,13 @@ func (o *Class) IsValid() *AppError {
 	return nil
 }
 
+func (o *Class) IsBelongToSchool(schoolId string) *AppError {
+	if len(schoolId) != 26 || o.SchoolId != schoolId {
+		return NewAppError("Class.IsValid", "model.class.is_valid.school_id.app_error", nil, "id="+o.Id, http.StatusBadRequest)
+	}
+	return nil
+}
+
 func (o *Class) PreSave() {
 	if o.Id == "" {
 		o.Id = NewId()

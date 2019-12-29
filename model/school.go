@@ -25,19 +25,20 @@ const (
 )
 
 type School struct {
-	Id                   string `json:"id"`
-	CreateAt             int64  `json:"create_at"`
-	UpdateAt             int64  `json:"update_at"`
-	DeleteAt             int64  `json:"delete_at"`
-	Name                 string `json:"name"`
-	Description          string `json:"description"`
-	Email                string `json:"email"`
-	Phone                string `json:"phone"`
-	ContactName          string `json:"contact_name"`
-	Address              string `json:"address"`
-	InviteId             string `json:"invite_id"`
-	AllowOpenInvite      bool   `json:"allow_open_invite"`
-	LastSchoolIconUpdate int64  `json:"last_school_icon_update,omitempty"`
+	Id                   string  `json:"id"`
+	CreateAt             int64   `json:"create_at"`
+	UpdateAt             int64   `json:"update_at"`
+	DeleteAt             int64   `json:"delete_at"`
+	Name                 string  `json:"name"`
+	Description          string  `json:"description"`
+	Email                string  `json:"email"`
+	Phone                string  `json:"phone"`
+	ContactName          string  `json:"contact_name"`
+	Address              string  `json:"address"`
+	InviteId             string  `json:"invite_id"`
+	AllowOpenInvite      bool    `json:"allow_open_invite"`
+	LastSchoolIconUpdate int64   `json:"last_school_icon_update,omitempty"`
+	SchemeId             *string `json:"scheme_id"`
 }
 
 type SchoolPatch struct {

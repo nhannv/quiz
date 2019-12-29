@@ -266,6 +266,50 @@ func (c *Context) RequireClassId() *Context {
 	return c
 }
 
+func (c *Context) RequireKidId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.KidId) != 26 {
+		c.SetInvalidUrlParam("kid_id")
+	}
+	return c
+}
+
+func (c *Context) RequireScheduleId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.ScheduleId) != 26 {
+		c.SetInvalidUrlParam("schedule_id")
+	}
+	return c
+}
+
+func (c *Context) RequireMenuId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.MenuId) != 26 {
+		c.SetInvalidUrlParam("menu_id")
+	}
+	return c
+}
+
+func (c *Context) RequireEventId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.EventId) != 26 {
+		c.SetInvalidUrlParam("event_id")
+	}
+	return c
+}
+
 func (c *Context) RequireTeamId() *Context {
 	if c.Err != nil {
 		return c

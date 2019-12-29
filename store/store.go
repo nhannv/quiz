@@ -16,6 +16,10 @@ type StoreResult struct {
 
 type Store interface {
 	School() SchoolStore
+	Kid() KidStore
+	Schedule() ScheduleStore
+	Menu() MenuStore
+	Event() EventStore
 	Team() TeamStore
 	Channel() ChannelStore
 	Post() PostStore
@@ -64,8 +68,10 @@ type SchoolStore interface {
 	Update(school *model.School) (*model.School, *model.AppError)
 	Get(id string) (*model.School, *model.AppError)
 	UpdateLastSchoolIconUpdate(schoolId string, curTime int64) *model.AppError
+	GetSchoolsForUser(userId string) ([]*model.SchoolMember, *model.AppError)
 	SaveMember(member *model.SchoolMember, maxUsersPerSchool int) (*model.SchoolMember, *model.AppError)
 	UpdateMember(member *model.SchoolMember) (*model.SchoolMember, *model.AppError)
+	GetSchoolsByUserId(userId string) ([]*model.School, *model.AppError)
 	GetMember(schoolId string, userId string) (*model.SchoolMember, *model.AppError)
 	GetActiveMemberCount(schoolId string, restrictions *model.ViewUsersRestrictions) (int64, *model.AppError)
 	GetBranches(schoolId string) ([]*model.Branch, *model.AppError)
@@ -78,6 +84,39 @@ type SchoolStore interface {
 	SaveClass(class *model.Class) (*model.Class, *model.AppError)
 	RemoveClass(classId string) *model.AppError
 	ClearCaches()
+}
+
+type KidStore interface {
+	Save(kid *model.Kid) (*model.Kid, *model.AppError)
+	Update(kid *model.Kid) (*model.Kid, *model.AppError)
+	Get(id string) (*model.Kid, *model.AppError)
+	GetKidsForUser(userId string) ([]*model.KidGuardian, *model.AppError)
+	SaveGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError)
+	UpdateGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError)
+	GetGuardian(kidId string, userId string) (*model.KidGuardian, *model.AppError)
+	GetActiveGuardianCount(kidId string) (int64, *model.AppError)
+	ClearCaches()
+}
+
+type ScheduleStore interface {
+	Save(schedule *model.Schedule) (*model.Schedule, *model.AppError)
+	Update(schedule *model.Schedule) (*model.Schedule, *model.AppError)
+	Get(id string) (*model.Schedule, *model.AppError)
+	GetByWeek(week int, year int) ([]*model.Schedule, *model.AppError)
+}
+
+type MenuStore interface {
+	Save(menu *model.Menu) (*model.Menu, *model.AppError)
+	Update(menu *model.Menu) (*model.Menu, *model.AppError)
+	Get(id string) (*model.Menu, *model.AppError)
+	GetByWeek(week int, year int) ([]*model.Menu, *model.AppError)
+}
+
+type EventStore interface {
+	Save(event *model.Event) (*model.Event, *model.AppError)
+	Update(event *model.Event) (*model.Event, *model.AppError)
+	Get(id string) (*model.Event, *model.AppError)
+	GetByClass(classId string) ([]*model.Event, *model.AppError)
 }
 
 type TeamStore interface {
@@ -254,7 +293,7 @@ type PostStore interface {
 	GetOldest() (*model.Post, *model.AppError)
 	GetMaxPostSize() int
 	GetParentsForExportAfter(limit int, afterId string) ([]*model.PostForExport, *model.AppError)
-	GetRepliesForExport(parentId string) ([]*model.ReplyForExport, *model.AppError)
+	GetRepliesForExport(guardianId string) ([]*model.ReplyForExport, *model.AppError)
 	GetDirectPostParentsForExportAfter(limit int, afterId string) ([]*model.DirectPostForExport, *model.AppError)
 }
 

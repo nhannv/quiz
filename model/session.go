@@ -35,11 +35,13 @@ type Session struct {
 	LastActivityAt int64           `json:"last_activity_at"`
 	UserId         string          `json:"user_id"`
 	DeviceId       string          `json:"device_id"`
+	SchoolId       string          `json:"school_id"`
 	Roles          string          `json:"roles"`
 	IsOAuth        bool            `json:"is_oauth"`
 	Props          StringMap       `json:"props"`
 	TeamMembers    []*TeamMember   `json:"team_members" db:"-"`
 	SchoolMembers  []*SchoolMember `json:"school_members" db:"-"`
+	KidGuardians   []*KidGuardian  `json:"kid_parents" db:"-"`
 }
 
 func (me *Session) DeepCopy() *Session {
@@ -120,6 +122,16 @@ func (me *Session) AddProp(key string, value string) {
 	}
 
 	me.Props[key] = value
+}
+
+func (me *Session) GetParentByKidId(kidId string) *KidGuardian {
+	for _, kid := range me.KidGuardians {
+		if kid.KidId == kidId {
+			return kid
+		}
+	}
+
+	return nil
 }
 
 func (me *Session) GetSchoolBySchoolId(schoolId string) *SchoolMember {

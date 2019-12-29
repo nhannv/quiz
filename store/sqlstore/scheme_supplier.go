@@ -35,6 +35,9 @@ func NewSqlSchemeStore(sqlStore SqlStore) store.SchemeStore {
 		table.ColMap("DefaultChannelAdminRole").SetMaxSize(64)
 		table.ColMap("DefaultChannelUserRole").SetMaxSize(64)
 		table.ColMap("DefaultChannelGuestRole").SetMaxSize(64)
+		table.ColMap("DefaultSchoolParentRole").SetMaxSize(64)
+		table.ColMap("DefaultSchoolTeacherRole").SetMaxSize(64)
+		table.ColMap("DefaultSchoolAdminRole").SetMaxSize(64)
 	}
 
 	return s
@@ -80,7 +83,7 @@ func (s *SqlSchemeStore) Save(scheme *model.Scheme) (*model.Scheme, *model.AppEr
 
 func (s *SqlSchemeStore) createScheme(scheme *model.Scheme, transaction *gorp.Transaction) (*model.Scheme, *model.AppError) {
 	// Fetch the default system scheme roles to populate default permissions.
-	defaultRoleNames := []string{model.TEAM_ADMIN_ROLE_ID, model.TEAM_USER_ROLE_ID, model.TEAM_GUEST_ROLE_ID, model.CHANNEL_ADMIN_ROLE_ID, model.CHANNEL_USER_ROLE_ID, model.CHANNEL_GUEST_ROLE_ID}
+	defaultRoleNames := []string{model.SCHOOL_ADMIN_ROLE_ID, model.SCHOOL_TEACHER_ROLE_ID, model.SCHOOL_PARENT_ROLE_ID, model.TEAM_ADMIN_ROLE_ID, model.TEAM_USER_ROLE_ID, model.TEAM_GUEST_ROLE_ID, model.CHANNEL_ADMIN_ROLE_ID, model.CHANNEL_USER_ROLE_ID, model.CHANNEL_GUEST_ROLE_ID}
 	defaultRoles := make(map[string]*model.Role)
 	roles, err := s.SqlStore.Role().GetByNames(defaultRoleNames)
 	if err != nil {
@@ -101,6 +104,12 @@ func (s *SqlSchemeStore) createScheme(scheme *model.Scheme, transaction *gorp.Tr
 			defaultRoles[model.CHANNEL_USER_ROLE_ID] = role
 		case model.CHANNEL_GUEST_ROLE_ID:
 			defaultRoles[model.CHANNEL_GUEST_ROLE_ID] = role
+		case model.SCHOOL_PARENT_ROLE_ID:
+			defaultRoles[model.SCHOOL_PARENT_ROLE_ID] = role
+		case model.SCHOOL_TEACHER_ROLE_ID:
+			defaultRoles[model.SCHOOL_TEACHER_ROLE_ID] = role
+		case model.SCHOOL_ADMIN_ROLE_ID:
+			defaultRoles[model.SCHOOL_ADMIN_ROLE_ID] = role
 		}
 	}
 
@@ -109,6 +118,49 @@ func (s *SqlSchemeStore) createScheme(scheme *model.Scheme, transaction *gorp.Tr
 	}
 
 	// Create the appropriate default roles for the scheme.
+	if scheme.Scope == model.SCHEME_SCOPE_SCHOOL {
+		// School Admin Role
+		schoolAdminRole := &model.Role{
+			Name:          model.NewId(),
+			DisplayName:   fmt.Sprintf("School Admin Role for Scheme %s", scheme.Name),
+			Permissions:   defaultRoles[model.SCHOOL_ADMIN_ROLE_ID].Permissions,
+			SchemeManaged: true,
+		}
+
+		savedRole, err := s.SqlStore.Role().(*SqlRoleStore).createRole(schoolAdminRole, transaction)
+		if err != nil {
+			return nil, err
+		}
+		scheme.DefaultSchoolAdminRole = savedRole.Name
+
+		// School Parent Role
+		schoolParentRole := &model.Role{
+			Name:          model.NewId(),
+			DisplayName:   fmt.Sprintf("School User Role for Scheme %s", scheme.Name),
+			Permissions:   defaultRoles[model.SCHOOL_PARENT_ROLE_ID].Permissions,
+			SchemeManaged: true,
+		}
+
+		savedRole, err = s.SqlStore.Role().(*SqlRoleStore).createRole(schoolParentRole, transaction)
+		if err != nil {
+			return nil, err
+		}
+		scheme.DefaultSchoolParentRole = savedRole.Name
+
+		// School Teacher Role
+		schoolTeacherRole := &model.Role{
+			Name:          model.NewId(),
+			DisplayName:   fmt.Sprintf("School Teacher Role for Scheme %s", scheme.Name),
+			Permissions:   defaultRoles[model.SCHOOL_TEACHER_ROLE_ID].Permissions,
+			SchemeManaged: true,
+		}
+
+		savedRole, err = s.SqlStore.Role().(*SqlRoleStore).createRole(schoolTeacherRole, transaction)
+		if err != nil {
+			return nil, err
+		}
+		scheme.DefaultSchoolTeacherRole = savedRole.Name
+	}
 	if scheme.Scope == model.SCHEME_SCOPE_TEAM {
 		// Team Admin Role
 		teamAdminRole := &model.Role{

@@ -70,6 +70,10 @@ type SqlStore interface {
 	LockToMaster()
 	UnlockFromMaster()
 	School() store.SchoolStore
+	Kid() store.KidStore
+	Schedule() store.ScheduleStore
+	Menu() store.MenuStore
+	Event() store.EventStore
 	Team() store.TeamStore
 	Channel() store.ChannelStore
 	Post() store.PostStore

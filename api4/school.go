@@ -280,28 +280,8 @@ func getClass(c *Context, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(class.ToJson()))
 }
 
-func getClassesByBranch(c *Context, w http.ResponseWriter, r *http.Request) {
-	c.RequireSchoolId().RequireBranchId()
-	if c.Err != nil {
-		return
-	}
-
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_VIEW_TEAM) {
-		c.SetPermissionError(model.PERMISSION_VIEW_TEAM)
-		return
-	}
-
-	classes, err := c.App.GetClassesByBranch(c.Params.BranchId)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	w.Write([]byte(model.ClassesToJson(classes)))
-}
-
 func addClass(c *Context, w http.ResponseWriter, r *http.Request) {
-	c.RequireSchoolId().RequireBranchId()
+	c.RequireSchoolId()
 	if c.Err != nil {
 		return
 	}
@@ -309,7 +289,6 @@ func addClass(c *Context, w http.ResponseWriter, r *http.Request) {
 	var err *model.AppError
 	class := model.ClassFromJson(r.Body)
 	class.SchoolId = c.Params.SchoolId
-	class.BranchId = c.Params.BranchId
 
 	class.CreatorId = c.App.Session.UserId
 	if !c.App.SessionHasPermissionToSchool(c.App.Session, class.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-server/v5/model"
@@ -27,6 +28,12 @@ type Params struct {
 	SchoolId               string
 	BranchId               string
 	ClassId                string
+	KidId                  string
+	ScheduleId             string
+	MenuId                 string
+	EventId                string
+	Week                   int
+	Year                   int
 	TeamId                 string
 	InviteId               string
 	TokenId                string
@@ -99,6 +106,35 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, ok := props["class_id"]; ok {
 		params.ClassId = val
+	}
+
+	if val, ok := props["schedule_id"]; ok {
+		params.ScheduleId = val
+	}
+
+	if val, ok := props["menu_id"]; ok {
+		params.MenuId = val
+	}
+
+	y, w := time.Now().ISOWeek()
+	if val, err := strconv.Atoi(query.Get("week")); err != nil || val < 0 {
+		params.Week = w
+	} else {
+		params.Week = val
+	}
+
+	if val, err := strconv.Atoi(query.Get("year")); err != nil || val < 0 {
+		params.Year = y
+	} else {
+		params.Year = val
+	}
+
+	if val, ok := props["event_id"]; ok {
+		params.EventId = val
+	}
+
+	if val, ok := props["kid_id"]; ok {
+		params.KidId = val
 	}
 
 	if val, ok := props["team_id"]; ok {

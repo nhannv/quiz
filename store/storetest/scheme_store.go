@@ -26,6 +26,28 @@ func TestSchemeStore(t *testing.T, ss store.Store) {
 
 func createDefaultRoles(t *testing.T, ss store.Store) {
 	ss.Role().Save(&model.Role{
+		Name:        model.SCHOOL_ADMIN_ROLE_ID,
+		DisplayName: model.SCHOOL_ADMIN_ROLE_ID,
+		Permissions: []string{
+			model.PERMISSION_CREATE_KID.Id,
+		},
+	})
+
+	ss.Role().Save(&model.Role{
+		Name:        model.SCHOOL_TEACHER_ROLE_ID,
+		DisplayName: model.SCHOOL_TEACHER_ROLE_ID,
+		Permissions: []string{
+			model.PERMISSION_CREATE_KID.Id,
+		},
+	})
+
+	ss.Role().Save(&model.Role{
+		Name:        model.SCHOOL_PARENT_ROLE_ID,
+		DisplayName: model.SCHOOL_PARENT_ROLE_ID,
+		Permissions: []string{},
+	})
+
+	ss.Role().Save(&model.Role{
 		Name:        model.TEAM_ADMIN_ROLE_ID,
 		DisplayName: model.TEAM_ADMIN_ROLE_ID,
 		Permissions: []string{
