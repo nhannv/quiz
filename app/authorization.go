@@ -39,7 +39,7 @@ func (a *App) SessionHasPermissionToKid(session model.Session, kidId string, per
 		return false
 	}
 
-	kidGuardian := session.GetParentByKidId(kidId)
+	kidGuardian := session.GetGuardianByKidId(kidId)
 	if kidGuardian != nil {
 		return true
 	}
