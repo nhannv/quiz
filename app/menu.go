@@ -27,6 +27,15 @@ func (a *App) CreateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 	return rmenu, nil
 }
 
+func (a *App) CreateActivityNote(note *model.ActivityNote) (*model.ActivityNote, *model.AppError) {
+	rnote, err := a.Srv.Store.ActivityNote().Save(note)
+	if err != nil {
+		return nil, err
+	}
+
+	return rnote, nil
+}
+
 func (a *App) UpdateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 	oldMenu, err := a.GetMenu(menu.Id)
 	if err != nil {
@@ -39,7 +48,6 @@ func (a *App) UpdateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 	oldMenu.Description = menu.Description
 	oldMenu.WeekDay = menu.WeekDay
 	oldMenu.StartTime = menu.StartTime
-	oldMenu.Active = menu.Active
 
 	oldMenu, err = a.updateMenuUnsanitized(oldMenu)
 	if err != nil {

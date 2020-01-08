@@ -134,6 +134,9 @@ type Routes struct {
 	Menu            *mux.Router // 'api/v4/menus/{menu_id:[A-Za-z0-9]+}'
 	Events          *mux.Router // 'api/v4/events'
 	Event           *mux.Router // 'api/v4/events/{event_id:[A-Za-z0-9]+}'
+	ClassMedicines  *mux.Router // 'api/v4/classes/{class_id:[A-Za-z0-9]+}/medicines'
+	KidMedicines    *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}/medicines'
+	Medicine        *mux.Router // 'api/v4/medicines/{request_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -251,7 +254,7 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.Class = api.BaseRoutes.Classes.PathPrefix("/{class_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.Kids = api.BaseRoutes.ApiRoot.PathPrefix("/kids").Subrouter()
-	api.BaseRoutes.Kid = api.BaseRoutes.Kids.PathPrefix("/{kid_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.Kid = api.BaseRoutes.ApiRoot.PathPrefix("/kids/{kid_id:[A-Za-z0-9]+}").Subrouter()
 	api.BaseRoutes.KidGuardians = api.BaseRoutes.Kid.PathPrefix("/parents").Subrouter()
 	api.BaseRoutes.KidGuardian = api.BaseRoutes.KidGuardians.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
 
@@ -259,10 +262,14 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.Schedule = api.BaseRoutes.Schedules.PathPrefix("/{schedule_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.Menus = api.BaseRoutes.Class.PathPrefix("/menus").Subrouter()
-	api.BaseRoutes.Menu = api.BaseRoutes.Schedules.PathPrefix("/{menu_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.Menu = api.BaseRoutes.ApiRoot.PathPrefix("/menus/{menu_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.Events = api.BaseRoutes.Class.PathPrefix("/events").Subrouter()
 	api.BaseRoutes.Event = api.BaseRoutes.Events.PathPrefix("/{event_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.ClassMedicines = api.BaseRoutes.Class.PathPrefix("/medicines").Subrouter()
+	api.BaseRoutes.KidMedicines = api.BaseRoutes.Kid.PathPrefix("/medicines").Subrouter()
+	api.BaseRoutes.Medicine = api.BaseRoutes.KidMedicines.PathPrefix("/{request_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.InitUser()
 	api.InitBot()
@@ -302,6 +309,7 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.InitSchedule()
 	api.InitMenu()
 	api.InitEvent()
+	api.InitMedicine()
 
 	root.Handle("/api/v4/{anything:.*}", http.HandlerFunc(api.Handle404))
 

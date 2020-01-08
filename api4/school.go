@@ -261,12 +261,12 @@ func getClasses(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getClass(c *Context, w http.ResponseWriter, r *http.Request) {
-	c.RequireSchoolId().RequireClassId()
+	c.RequireClassId()
 	if c.Err != nil {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}

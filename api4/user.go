@@ -1464,7 +1464,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAuditWithUserId(user.Id, "success")
 
 	user.Schools = schools
-	
+
 	if r.Header.Get(model.HEADER_REQUESTED_WITH) == model.HEADER_REQUESTED_WITH_XML {
 		c.App.AttachSessionCookies(w, r)
 	}

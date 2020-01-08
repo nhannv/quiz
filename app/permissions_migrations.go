@@ -56,6 +56,12 @@ const (
 	PERMISSION_INVITE_GUEST                      = "invite_guest"
 	PERMISSION_PROMOTE_GUEST                     = "promote_guest"
 	PERMISSION_DEMOTE_TO_GUEST                   = "demote_to_guest"
+
+	PERMISSION_MANAGE_SCHOOL   = "manage_school"
+	PERMISSION_CREATE_KID      = "create_kid"
+	PERMISSION_MANAGE_KID      = "manage_kid"
+	PERMISSION_MANAGE_CLASS    = "manage_class"
+	PERMISSION_MANAGE_ACTIVITY = "manage_activity"
 )
 
 func isRole(role string) func(string, map[string]map[string]bool) bool {

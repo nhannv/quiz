@@ -117,6 +117,7 @@ func ParamsFromRequest(r *http.Request) *Params {
 	}
 
 	y, w := time.Now().ISOWeek()
+
 	if val, err := strconv.Atoi(query.Get("week")); err != nil || val < 0 {
 		params.Week = w
 	} else {

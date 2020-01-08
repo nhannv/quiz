@@ -72,6 +72,8 @@ type SqlSupplierStores struct {
 	schedule             store.ScheduleStore
 	menu                 store.MenuStore
 	event                store.EventStore
+	medicine             store.MedicineStore
+	activityNote         store.ActivityNoteStore
 	team                 store.TeamStore
 	channel              store.ChannelStore
 	post                 store.PostStore
@@ -142,6 +144,8 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	supplier.stores.schedule = NewSqlScheduleStore(supplier)
 	supplier.stores.menu = NewSqlMenuStore(supplier)
 	supplier.stores.event = NewSqlEventStore(supplier)
+	supplier.stores.medicine = NewSqlMedicineStore(supplier)
+	supplier.stores.activityNote = NewSqlActivityNoteStore(supplier)
 	supplier.stores.team = NewSqlTeamStore(supplier)
 	supplier.stores.channel = NewSqlChannelStore(supplier, metrics)
 	supplier.stores.post = NewSqlPostStore(supplier, metrics)
@@ -193,6 +197,8 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	supplier.stores.schedule.(*SqlScheduleStore).CreateIndexesIfNotExists()
 	supplier.stores.menu.(*SqlMenuStore).CreateIndexesIfNotExists()
 	supplier.stores.event.(*SqlEventStore).CreateIndexesIfNotExists()
+	supplier.stores.medicine.(*SqlMedicineStore).CreateIndexesIfNotExists()
+	supplier.stores.activityNote.(*SqlActivityNoteStore).CreateIndexesIfNotExists()
 	supplier.stores.team.(*SqlTeamStore).CreateIndexesIfNotExists()
 	supplier.stores.channel.(*SqlChannelStore).CreateIndexesIfNotExists()
 	supplier.stores.post.(*SqlPostStore).CreateIndexesIfNotExists()
@@ -961,6 +967,14 @@ func (ss *SqlSupplier) Menu() store.MenuStore {
 
 func (ss *SqlSupplier) Event() store.EventStore {
 	return ss.stores.event
+}
+
+func (ss *SqlSupplier) Medicine() store.MedicineStore {
+	return ss.stores.medicine
+}
+
+func (ss *SqlSupplier) ActivityNote() store.ActivityNoteStore {
+	return ss.stores.activityNote
 }
 
 func (ss *SqlSupplier) Team() store.TeamStore {

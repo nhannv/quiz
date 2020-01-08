@@ -34,12 +34,27 @@ func (a *App) SessionHasPermissionToSchool(session model.Session, schoolId strin
 	return a.RolesGrantPermission(session.GetUserRoles(), permission.Id)
 }
 
+func (a *App) SessionHasPermissionTeacherToKid(session model.Session, kidId string, permission *model.Permission) bool {
+	if kidId == "" {
+		return false
+	}
+
+	kidGuardian := session.GetGuardianByKidId(kidId)
+	if kidGuardian != nil && kidGuardian.Type == model.GUARDIAN_TYPE_TEACHER {
+		if a.RolesGrantPermission(session.GetUserRoles(), permission.Id) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (a *App) SessionHasPermissionToKid(session model.Session, kidId string, permission *model.Permission) bool {
 	if kidId == "" {
 		return false
 	}
 
-	kidGuardian := session.GetParentByKidId(kidId)
+	kidGuardian := session.GetGuardianByKidId(kidId)
 	if kidGuardian != nil {
 		return true
 	}

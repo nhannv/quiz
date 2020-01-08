@@ -19,7 +19,7 @@ type SqlKidStore struct {
 type kidGuardian struct {
 	KidId    string
 	UserId   string
-	IsParent bool
+	Type     string
 	DeleteAt int64
 }
 
@@ -27,7 +27,7 @@ func NewKidGuardianFromModel(tm *model.KidGuardian) *kidGuardian {
 	return &kidGuardian{
 		KidId:    tm.KidId,
 		UserId:   tm.UserId,
-		IsParent: tm.IsParent,
+		Type:     tm.Type,
 		DeleteAt: tm.DeleteAt,
 	}
 }
@@ -38,7 +38,7 @@ func (db kidGuardian) ToModel() *model.KidGuardian {
 	kp := &model.KidGuardian{
 		KidId:    db.KidId,
 		UserId:   db.UserId,
-		IsParent: db.IsParent,
+		Type:     db.Type,
 		DeleteAt: db.DeleteAt,
 	}
 	return kp
@@ -75,7 +75,7 @@ func NewSqlKidStore(sqlStore SqlStore) store.KidStore {
 		tablem := db.AddTableWithName(kidGuardian{}, "KidGuardians").SetKeys(false, "KidId", "UserId")
 		tablem.ColMap("KidId").SetMaxSize(26)
 		tablem.ColMap("UserId").SetMaxSize(26)
-		tablem.ColMap("IsParent").SetMaxSize(1)
+		tablem.ColMap("Type").SetMaxSize(1)
 	}
 
 	return s
@@ -160,7 +160,12 @@ func (s SqlKidStore) Get(id string) (*model.Kid, *model.AppError) {
 
 func (s SqlKidStore) GetKidsByUserId(userId string) ([]*model.Kid, *model.AppError) {
 	var kids []*model.Kid
-	if _, err := s.GetReplica().Select(&kids, "SELECT Kids.* FROM Kids, KidGuardians WHERE KidGuardians.KidId = Kids.Id AND KidGuardians.UserId = :UserId AND KidGuardians.DeleteAt = 0 AND Kids.DeleteAt = 0", map[string]interface{}{"UserId": userId}); err != nil {
+	if _, err := s.GetReplica().Select(&kids,
+		`SELECT k.*, c.Name as ClassName FROM Kids k
+		INNER JOIN KidGuardians g ON k.Id = g.KidId
+		LEFT JOIN Classes c ON c.Id = k.ClassId
+		WHERE g.UserId = :UserId AND g.DeleteAt = 0 AND k.DeleteAt = 0`,
+		map[string]interface{}{"UserId": userId}); err != nil {
 		return nil, model.NewAppError("SqlKidStore.GetKidsByUserId", "store.sql_kid.get_all.app_error", nil, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -370,7 +375,7 @@ func (s SqlKidStore) GetGuardiansByIds(kidId string, userIds []string) ([]*model
 	return dbGuardians.ToModel(), nil
 }
 
-func (s SqlKidStore) GetKidsForUser(userId string) ([]*model.KidGuardian, *model.AppError) {
+func (s SqlKidStore) GetGuardiansByUser(userId string) ([]*model.KidGuardian, *model.AppError) {
 	query := s.getKidGuardiansSelectQuery().
 		Where(sq.Eq{"KidGuardians.UserId": userId})
 

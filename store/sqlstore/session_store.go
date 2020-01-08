@@ -66,6 +66,13 @@ func (me SqlSessionStore) Save(session *model.Session) (*model.Session, *model.A
 		close(scs)
 	}()
 
+	gcs := make(chan store.StoreResult, 1)
+	go func() {
+		guardians, err := me.Kid().GetGuardiansByUser(session.UserId)
+		gcs <- store.StoreResult{Data: guardians, Err: err}
+		close(gcs)
+	}()
+
 	if err := me.GetMaster().Insert(session); err != nil {
 		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+err.Error(), http.StatusInternalServerError)
 	}
@@ -95,6 +102,20 @@ func (me SqlSessionStore) Save(session *model.Session) (*model.Session, *model.A
 	for _, sm := range tempSchoolMembers {
 		if sm.DeleteAt == 0 {
 			session.SchoolMembers = append(session.SchoolMembers, sm)
+		}
+	}
+
+	rgcs := <-gcs
+
+	if rscs.Err != nil {
+		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+rscs.Err.Error(), http.StatusInternalServerError)
+	}
+
+	tempGuardians := rgcs.Data.([]*model.KidGuardian)
+	session.KidGuardians = make([]*model.KidGuardian, 0, len(tempGuardians))
+	for _, sm := range tempGuardians {
+		if sm.DeleteAt == 0 {
+			session.KidGuardians = append(session.KidGuardians, sm)
 		}
 	}
 
@@ -131,6 +152,18 @@ func (me SqlSessionStore) Get(sessionIdOrToken string) (*model.Session, *model.A
 	for _, sm := range tempSchoolMembers {
 		if sm.DeleteAt == 0 {
 			sessions[0].SchoolMembers = append(sessions[0].SchoolMembers, sm)
+		}
+	}
+
+	// Add guardians to session
+	tempGuardians, err := me.Kid().GetGuardiansByUser(sessions[0].UserId)
+	if err != nil {
+		return nil, model.NewAppError("SqlSessionStore.Get", "store.sql_session.get.app_error", nil, "sessionIdOrToken="+sessionIdOrToken+", "+err.Error(), http.StatusInternalServerError)
+	}
+	sessions[0].KidGuardians = make([]*model.KidGuardian, 0, len(tempGuardians))
+	for _, gm := range tempGuardians {
+		if gm.DeleteAt == 0 {
+			sessions[0].KidGuardians = append(sessions[0].KidGuardians, gm)
 		}
 	}
 	return session, nil

@@ -30,7 +30,7 @@ type Menu struct {
 	Description string `json:"description"`
 	WeekDay     int    `json:"week_day"`
 	StartTime   int64  `json:"start_time"`
-	Active      bool   `json:"active"`
+	Note        string `json:"note"`
 	ClassId     string `json:"class_id"`
 }
 
@@ -119,7 +119,6 @@ func (o *Menu) PreSave() {
 	if o.Id == "" {
 		o.Id = NewId()
 	}
-	o.Active = true
 	o.CreateAt = GetMillis()
 	o.UpdateAt = o.CreateAt
 }
@@ -200,9 +199,6 @@ func (t *Menu) Patch(patch *MenuPatch) {
 	}
 	if patch.Description != nil {
 		t.Description = *patch.Description
-	}
-	if patch.Active != nil {
-		t.Active = *patch.Active
 	}
 }
 

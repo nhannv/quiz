@@ -33,6 +33,7 @@ type Kid struct {
 	Dob         int64  `json:"dob"`
 	Gender      bool   `json:"gender"`
 	ClassId     string `json:"class_id"`
+	ClassName   string `json:"class_name"`
 	InviteId    string `json:"invite_id"`
 }
 
@@ -269,4 +270,15 @@ func KidPatchFromJson(data io.Reader) *KidPatch {
 	}
 
 	return &kid
+}
+
+func KidListToJson(u []*Kid) string {
+	b, _ := json.Marshal(u)
+	return string(b)
+}
+
+func KidListFromJson(data io.Reader) []*Kid {
+	var kids []*Kid
+	json.NewDecoder(data).Decode(&kids)
+	return kids
 }

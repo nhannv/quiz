@@ -20,6 +20,8 @@ type Store interface {
 	Schedule() ScheduleStore
 	Menu() MenuStore
 	Event() EventStore
+	Medicine() MedicineStore
+	ActivityNote() ActivityNoteStore
 	Team() TeamStore
 	Channel() ChannelStore
 	Post() PostStore
@@ -90,10 +92,11 @@ type KidStore interface {
 	Save(kid *model.Kid) (*model.Kid, *model.AppError)
 	Update(kid *model.Kid) (*model.Kid, *model.AppError)
 	Get(id string) (*model.Kid, *model.AppError)
-	GetKidsForUser(userId string) ([]*model.KidGuardian, *model.AppError)
+	GetKidsByUserId(userId string) ([]*model.Kid, *model.AppError)
 	SaveGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError)
 	UpdateGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError)
 	GetGuardian(kidId string, userId string) (*model.KidGuardian, *model.AppError)
+	GetGuardiansByUser(userId string) ([]*model.KidGuardian, *model.AppError)
 	GetActiveGuardianCount(kidId string) (int64, *model.AppError)
 	ClearCaches()
 }
@@ -102,7 +105,7 @@ type ScheduleStore interface {
 	Save(schedule *model.Schedule) (*model.Schedule, *model.AppError)
 	Update(schedule *model.Schedule) (*model.Schedule, *model.AppError)
 	Get(id string) (*model.Schedule, *model.AppError)
-	GetByWeek(week int, year int) ([]*model.Schedule, *model.AppError)
+	GetByWeek(week int, year int, classId string) ([]*model.Schedule, *model.AppError)
 }
 
 type MenuStore interface {
@@ -112,11 +115,28 @@ type MenuStore interface {
 	GetByWeek(week int, year int) ([]*model.Menu, *model.AppError)
 }
 
+type ActivityNoteStore interface {
+	Save(activityNote *model.ActivityNote) (*model.ActivityNote, *model.AppError)
+}
+
 type EventStore interface {
 	Save(event *model.Event) (*model.Event, *model.AppError)
 	Update(event *model.Event) (*model.Event, *model.AppError)
 	Get(id string) (*model.Event, *model.AppError)
 	GetByClass(classId string) ([]*model.Event, *model.AppError)
+	GetRegistration(eventId string, kidId string) (*model.EventRegistration, *model.AppError)
+	GetRegistrationsByEvent(eventId string) ([]*model.EventRegistration, *model.AppError)
+	GetRegistrationsByKid(kidId string) ([]*model.EventRegistration, *model.AppError)
+}
+
+type MedicineStore interface {
+	SaveRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError)
+	SaveMedicine(medicine *model.Medicine) (*model.Medicine, *model.AppError)
+	UpdateRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError)
+	GetRequest(id string) (*model.MedicineRequest, *model.AppError)
+	GetRequestsByClass(classId string) ([]*model.MedicineRequest, *model.AppError)
+	GetRequestsByKid(kidId string) ([]*model.MedicineRequest, *model.AppError)
+	GetMedicinesByRequest(requestId string) ([]*model.Medicine, *model.AppError)
 }
 
 type TeamStore interface {

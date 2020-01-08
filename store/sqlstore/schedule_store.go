@@ -29,7 +29,6 @@ func NewSqlScheduleStore(sqlStore SqlStore) store.ScheduleStore {
 		table.ColMap("WeekDay").SetMaxSize(1)
 		table.ColMap("StartTime").SetMaxSize(20)
 		table.ColMap("EndTime").SetMaxSize(20)
-		table.ColMap("Active").SetMaxSize(1)
 		table.ColMap("ClassId").SetMaxSize(26)
 	}
 
@@ -109,9 +108,9 @@ func (s SqlScheduleStore) Get(id string) (*model.Schedule, *model.AppError) {
 	return obj.(*model.Schedule), nil
 }
 
-func (s SqlScheduleStore) GetByWeek(week int, year int) ([]*model.Schedule, *model.AppError) {
+func (s SqlScheduleStore) GetByWeek(week int, year int, classId string) ([]*model.Schedule, *model.AppError) {
 	var schedules []*model.Schedule
-	if _, err := s.GetReplica().Select(&schedules, "SELECT Schedules.* FROM Schedules WHERE Schedules.Week = :Week AND Schedules.Year = :Year AND Schedules.DeleteAt = 0", map[string]interface{}{"Week": week, "Year": year}); err != nil {
+	if _, err := s.GetReplica().Select(&schedules, "SELECT Schedules.* FROM Schedules WHERE Schedules.Week = :Week AND Schedules.Year = :Year AND Schedules.ClassId = :ClassId AND Schedules.DeleteAt = 0", map[string]interface{}{"Week": week, "Year": year, "ClassId": classId}); err != nil {
 		return nil, model.NewAppError("SqlScheduleStore.GetSchedulesByUserId", "store.sql_schedule.get_all.app_error", nil, err.Error(), http.StatusInternalServerError)
 	}
 

@@ -74,6 +74,6 @@ func (a *App) GetSchedule(scheduleId string) (*model.Schedule, *model.AppError) 
 	return a.Srv.Store.Schedule().Get(scheduleId)
 }
 
-func (a *App) GetSchedules(week int, year int) ([]*model.Schedule, *model.AppError) {
-	return a.Srv.Store.Schedule().GetByWeek(week, year)
+func (a *App) GetSchedules(week int, year int, classId string) ([]*model.Schedule, *model.AppError) {
+	return a.Srv.Store.Schedule().GetByWeek(week, year, classId)
 }

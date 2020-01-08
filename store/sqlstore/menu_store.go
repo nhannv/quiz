@@ -28,7 +28,6 @@ func NewSqlMenuStore(sqlStore SqlStore) store.MenuStore {
 		table.ColMap("Description").SetMaxSize(128)
 		table.ColMap("WeekDay").SetMaxSize(1)
 		table.ColMap("StartTime").SetMaxSize(20)
-		table.ColMap("Active").SetMaxSize(1)
 		table.ColMap("ClassId").SetMaxSize(26)
 	}
 
@@ -110,7 +109,10 @@ func (s SqlMenuStore) Get(id string) (*model.Menu, *model.AppError) {
 
 func (s SqlMenuStore) GetByWeek(week int, year int) ([]*model.Menu, *model.AppError) {
 	var menus []*model.Menu
-	if _, err := s.GetReplica().Select(&menus, "SELECT Menus.* FROM Menus WHERE Menus.Week = :Week AND Menus.Year = :Year AND Menus.DeleteAt = 0", map[string]interface{}{"Week": week, "Year": year}); err != nil {
+	if _, err := s.GetReplica().Select(&menus,
+		`SELECT Menus.*, COALESCE(ActivityNotes.Note, '') as Note FROM Menus
+		LEFT JOIN ActivityNotes ON Menus.Id = ActivityNotes.ActivityId AND ActivityNotes.Type = "F"
+		WHERE Menus.Week = :Week AND Menus.Year = :Year AND Menus.DeleteAt = 0`, map[string]interface{}{"Week": week, "Year": year}); err != nil {
 		return nil, model.NewAppError("SqlMenuStore.GetMenusByUserId", "store.sql_menu.get_all.app_error", nil, err.Error(), http.StatusInternalServerError)
 	}
 

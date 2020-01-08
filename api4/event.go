@@ -23,8 +23,8 @@ func init() {
 func (api *API) InitEvent() {
 	api.BaseRoutes.Events.Handle("", api.ApiSessionRequired(createEvent)).Methods("POST")
 	api.BaseRoutes.Events.Handle("", api.ApiSessionRequired(getEvents)).Methods("GET")
-	api.BaseRoutes.Event.Handle("/register", api.ApiSessionRequired(registerEvent)).Methods("POST")
-	api.BaseRoutes.Event.Handle("/paid", api.ApiSessionRequired(updatePaid)).Methods("PUT")
+	//api.BaseRoutes.Event.Handle("/register", api.ApiSessionRequired(registerEvent)).Methods("POST")
+	api.BaseRoutes.Event.Handle("/{kid_id:[A-Za-z0-9]+}/paid", api.ApiSessionRequired(updatePaid)).Methods("PUT")
 	api.BaseRoutes.Event.Handle("", api.ApiSessionRequired(getEvent)).Methods("GET")
 	api.BaseRoutes.Event.Handle("", api.ApiSessionRequired(updateEvent)).Methods("PUT")
 	api.BaseRoutes.Event.Handle("/patch", api.ApiSessionRequired(patchEvent)).Methods("PUT")
@@ -122,6 +122,35 @@ func updateEvent(c *Context, w http.ResponseWriter, r *http.Request) {
 
 func patchEvent(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.RequireEventId()
+	if c.Err != nil {
+		return
+	}
+
+	event := model.EventPatchFromJson(r.Body)
+
+	if event == nil {
+		c.SetInvalidParam("event")
+		return
+	}
+
+	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
+		return
+	}
+
+	patchedEvent, err := c.App.PatchEvent(c.Params.EventId, event)
+
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	c.LogAudit("")
+	w.Write([]byte(patchedEvent.ToJson()))
+}
+
+func updatePaid(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireEventId().RequireKidId()
 	if c.Err != nil {
 		return
 	}

@@ -124,7 +124,7 @@ func (me *Session) AddProp(key string, value string) {
 	me.Props[key] = value
 }
 
-func (me *Session) GetParentByKidId(kidId string) *KidGuardian {
+func (me *Session) GetGuardianByKidId(kidId string) *KidGuardian {
 	for _, kid := range me.KidGuardians {
 		if kid.KidId == kidId {
 			return kid

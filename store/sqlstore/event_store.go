@@ -194,3 +194,41 @@ func (s SqlEventStore) UpdateRegistration(registration *model.EventRegistration)
 
 	return &retrievedRegistration, nil
 }
+
+func (s SqlEventStore) GetRegistration(eventId string, kidId string) (*model.EventRegistration, *model.AppError) {
+	query := s.getEventRegistrationsSelectQuery().
+		Where(sq.Eq{"EventRegistrations.EventId": eventId}).
+		Where(sq.Eq{"EventRegistrations.KidId": kidId})
+
+	queryString, args, err := query.ToSql()
+	if err != nil {
+		return nil, model.NewAppError("SqlEventStore.UpdateRegistration", "store.sql_event.get_registration.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+
+	var retrievedRegistration model.EventRegistration
+	if err := s.GetMaster().SelectOne(&retrievedRegistration, queryString, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, model.NewAppError("SqlEventStore.UpdateRegistration", "store.sql_event.get_registration.missing.app_error", nil, "team_id="+eventId+"kid_id="+kidId+","+err.Error(), http.StatusNotFound)
+		}
+		return nil, model.NewAppError("SqlEventStore.UpdateRegistration", "store.sql_event.get_registration.app_error", nil, "team_id="+eventId+"kid_id="+kidId+","+err.Error(), http.StatusInternalServerError)
+	}
+	return &retrievedRegistration, nil
+}
+
+func (s SqlEventStore) GetRegistrationsByEvent(eventId string) ([]*model.EventRegistration, *model.AppError) {
+	var eventRegs []*model.EventRegistration
+	if _, err := s.GetReplica().Select(&eventRegs, "SELECT EventRegistrations.* FROM EventRegistrations WHERE EventRegistrations.EventId = :EventId AND EventRegistrations.DeleteAt = 0", map[string]interface{}{"EventId": eventId}); err != nil {
+		return nil, model.NewAppError("SqlEventStore.GetRegistrationsByEvent", "store.sql_event.get_reg_by_event.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+
+	return eventRegs, nil
+}
+
+func (s SqlEventStore) GetRegistrationsByKid(kidId string) ([]*model.EventRegistration, *model.AppError) {
+	var eventRegs []*model.EventRegistration
+	if _, err := s.GetReplica().Select(&eventRegs, "SELECT EventRegistrations.* FROM EventRegistrations WHERE EventRegistrations.KidId = :KidId AND EventRegistrations.DeleteAt = 0", map[string]interface{}{"KidId": kidId}); err != nil {
+		return nil, model.NewAppError("SqlEventStore.GetRegistrationsByKid", "store.sql_event.get_reg_by_kid.app_error", nil, err.Error(), http.StatusInternalServerError)
+	}
+
+	return eventRegs, nil
+}

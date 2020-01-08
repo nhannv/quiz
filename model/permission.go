@@ -22,6 +22,7 @@ var PERMISSION_MANAGE_SCHOOL *Permission
 var PERMISSION_CREATE_KID *Permission
 var PERMISSION_MANAGE_KID *Permission
 var PERMISSION_MANAGE_CLASS *Permission
+var PERMISSION_MANAGE_ACTIVITY *Permission
 var PERMISSION_INVITE_USER *Permission
 var PERMISSION_ADD_USER_TO_TEAM *Permission
 var PERMISSION_USE_SLASH_COMMANDS *Permission
@@ -127,6 +128,12 @@ func initializePermissions() {
 		"manage_class",
 		"authentication.permissions.manage_class.name",
 		"authentication.permissions.manage_class.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
+	PERMISSION_MANAGE_ACTIVITY = &Permission{
+		"manage_activity",
+		"authentication.permissions.manage_activity.name",
+		"authentication.permissions.manage_activity.description",
 		PERMISSION_SCOPE_SCHOOL,
 	}
 	PERMISSION_INVITE_USER = &Permission{
@@ -591,6 +598,7 @@ func initializePermissions() {
 		PERMISSION_CREATE_KID,
 		PERMISSION_MANAGE_KID,
 		PERMISSION_MANAGE_CLASS,
+		PERMISSION_MANAGE_ACTIVITY,
 		PERMISSION_INVITE_USER,
 		PERMISSION_ADD_USER_TO_TEAM,
 		PERMISSION_USE_SLASH_COMMANDS,

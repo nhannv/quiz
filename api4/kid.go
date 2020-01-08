@@ -24,6 +24,8 @@ func init() {
 
 func (api *API) InitKid() {
 	api.BaseRoutes.Kids.Handle("", api.ApiSessionRequired(createKid)).Methods("POST")
+	api.BaseRoutes.Kids.Handle("", api.ApiSessionRequired(getMyKids)).Methods("GET")
+	api.BaseRoutes.Kids.Handle("/mine", api.ApiSessionRequired(getMyKids)).Methods("GET")
 
 	api.BaseRoutes.Kid.Handle("", api.ApiSessionRequired(getKid)).Methods("GET")
 	api.BaseRoutes.Kid.Handle("", api.ApiSessionRequired(updateKid)).Methods("PUT")
@@ -72,6 +74,16 @@ func getKid(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte(kid.ToJson()))
+}
+
+func getMyKids(c *Context, w http.ResponseWriter, r *http.Request) {
+	kids, err := c.App.GetKidsForUser(c.App.Session.UserId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.Write([]byte(model.KidListToJson(kids)))
 }
 
 func updateKid(c *Context, w http.ResponseWriter, r *http.Request) {

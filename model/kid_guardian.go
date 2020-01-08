@@ -9,10 +9,15 @@ import (
 	"net/http"
 )
 
+const (
+	GUARDIAN_TYPE_PARENT  = "P"
+	GUARDIAN_TYPE_TEACHER = "T"
+)
+
 type KidGuardian struct {
 	KidId    string `json:"kid_id"`
 	UserId   string `json:"user_id"`
-	IsParent bool   `json:"is_parent"`
+	Type     string `json:"type"`
 	DeleteAt int64  `json:"delete_at"`
 }
 

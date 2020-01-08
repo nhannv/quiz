@@ -24,6 +24,7 @@ func (api *API) InitMenu() {
 	api.BaseRoutes.Menus.Handle("", api.ApiSessionRequired(createMenu)).Methods("POST")
 	api.BaseRoutes.Menus.Handle("", api.ApiSessionRequired(getMenus)).Methods("GET")
 	api.BaseRoutes.Menu.Handle("", api.ApiSessionRequired(getMenu)).Methods("GET")
+	api.BaseRoutes.Menu.Handle("/note/{kid_id:[A-Za-z0-9]+}", api.ApiSessionRequired(createNote)).Methods("POST")
 	api.BaseRoutes.Menu.Handle("", api.ApiSessionRequired(updateMenu)).Methods("PUT")
 	api.BaseRoutes.Menu.Handle("/patch", api.ApiSessionRequired(patchMenu)).Methods("PUT")
 }
@@ -53,6 +54,34 @@ func createMenu(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(rmenu.ToJson()))
+}
+
+func createNote(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireMenuId().RequireKidId()
+	activityNote := model.ActivityNoteFromJson(r.Body)
+
+	if activityNote == nil {
+		c.SetInvalidParam("activityNote")
+		return
+	}
+	activityNote.KidId = c.Params.KidId
+	activityNote.Type = model.ACTIVITY_TYPE_MENU
+	activityNote.ActivityId = c.Params.MenuId
+	activityNote.UserId = c.App.Session.UserId
+
+	if !c.App.SessionHasPermissionTeacherToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_ACTIVITY) {
+		c.Err = model.NewAppError("createActivityNote", "api.menu.is_kid_manage_activity_allowed.disabled.app_error", nil, "", http.StatusForbidden)
+		return
+	}
+
+	ractivityNote, err := c.App.CreateActivityNote(activityNote)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(ractivityNote.ToJson()))
 }
 
 func getMenu(c *Context, w http.ResponseWriter, r *http.Request) {

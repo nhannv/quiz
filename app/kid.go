@@ -100,6 +100,10 @@ func (a *App) GetKid(kidId string) (*model.Kid, *model.AppError) {
 	return a.Srv.Store.Kid().Get(kidId)
 }
 
+func (a *App) GetKidsForUser(userId string) ([]*model.Kid, *model.AppError) {
+	return a.Srv.Store.Kid().GetKidsByUserId(userId)
+}
+
 func (a *App) GetKidAvatar(kid *model.Kid) ([]byte, *model.AppError) {
 	if len(*a.Config().FileSettings.DriverName) == 0 {
 		return nil, model.NewAppError("GetKidAvatar", "api.kid.get_kid_icon.filesettings_no_driver.app_error", nil, "", http.StatusNotImplemented)

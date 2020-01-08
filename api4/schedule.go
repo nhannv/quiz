@@ -71,11 +71,12 @@ func getSchedule(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getSchedules(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.RequireClassId()
 	if c.Err != nil {
 		return
 	}
 
-	schedules, err := c.App.GetSchedules(c.Params.Week, c.Params.Year)
+	schedules, err := c.App.GetSchedules(c.Params.Week, c.Params.Year, c.Params.ClassId)
 	if err != nil {
 		c.Err = err
 		return
