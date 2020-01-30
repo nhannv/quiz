@@ -154,7 +154,7 @@ func createUser(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 
 		if token.Type == app.TOKEN_TYPE_GUEST_INVITATION {
-			if c.App.License() == nil || !*c.App.License().Features.GuestAccounts {
+			if c.App.License() == nil {
 				c.Err = model.NewAppError("CreateUserWithToken", "api.user.create_user.guest_accounts.license.app_error", nil, "", http.StatusBadRequest)
 				return
 			}
@@ -655,11 +655,6 @@ func getUsers(c *Context, w http.ResponseWriter, r *http.Request) {
 			profiles, err = c.App.GetUsersInChannelPage(inChannelId, c.Params.Page, c.Params.PerPage, c.IsSystemAdmin())
 		}
 	} else {
-		etag = c.App.GetUsersEtag(restrictions.Hash())
-		if c.HandleEtag(etag, "Get Users", w, r) {
-			return
-		}
-
 		userGetOptions, err = c.App.RestrictUsersGetByPermissions(c.App.Session.UserId, userGetOptions)
 		if err != nil {
 			c.Err = err
@@ -1437,7 +1432,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.IsGuest() {
-		if c.App.License() == nil || !*c.App.License().Features.GuestAccounts {
+		if c.App.License() == nil {
 			c.Err = model.NewAppError("login", "api.user.login.guest_accounts.license.error", nil, "", http.StatusUnauthorized)
 			return
 		}
@@ -2029,7 +2024,7 @@ func promoteGuestToUser(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.App.License() == nil || !*c.App.License().Features.GuestAccounts {
+	if c.App.License() == nil {
 		c.Err = model.NewAppError("Api4.promoteGuestToUser", "api.team.promote_guest_to_user.license.error", nil, "", http.StatusNotImplemented)
 		return
 	}
@@ -2069,7 +2064,7 @@ func demoteUserToGuest(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.App.License() == nil || !*c.App.License().Features.GuestAccounts {
+	if c.App.License() == nil {
 		c.Err = model.NewAppError("Api4.demoteUserToGuest", "api.team.demote_user_to_guest.license.error", nil, "", http.StatusNotImplemented)
 		return
 	}
