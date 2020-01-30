@@ -21,6 +21,7 @@ type Store interface {
 	Menu() MenuStore
 	Event() EventStore
 	Medicine() MedicineStore
+	Health() HealthStore
 	ActivityNote() ActivityNoteStore
 	Team() TeamStore
 	Channel() ChannelStore
@@ -113,6 +114,13 @@ type MenuStore interface {
 	Update(menu *model.Menu) (*model.Menu, *model.AppError)
 	Get(id string) (*model.Menu, *model.AppError)
 	GetByWeek(week int, year int) ([]*model.Menu, *model.AppError)
+}
+
+type HealthStore interface {
+	Save(health *model.Health) (*model.Health, *model.AppError)
+	Update(health *model.Health) (*model.Health, *model.AppError)
+	Get(id string) (*model.Health, *model.AppError)
+	GetAll(kidId string) ([]*model.Health, *model.AppError)
 }
 
 type ActivityNoteStore interface {

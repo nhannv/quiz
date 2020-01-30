@@ -75,6 +75,7 @@ type SqlStore interface {
 	Menu() store.MenuStore
 	Event() store.EventStore
 	Medicine() store.MedicineStore
+	Health() store.HealthStore
 	Team() store.TeamStore
 	Channel() store.ChannelStore
 	Post() store.PostStore

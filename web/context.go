@@ -310,6 +310,17 @@ func (c *Context) RequireEventId() *Context {
 	return c
 }
 
+func (c *Context) RequireHealthId() *Context {
+	if c.Err != nil {
+		return c
+	}
+
+	if len(c.Params.HealthId) != 26 {
+		c.SetInvalidUrlParam("health_id")
+	}
+	return c
+}
+
 func (c *Context) RequireTeamId() *Context {
 	if c.Err != nil {
 		return c

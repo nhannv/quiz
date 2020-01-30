@@ -32,6 +32,7 @@ type Params struct {
 	ScheduleId             string
 	MenuId                 string
 	EventId                string
+	HealthId               string
 	Week                   int
 	Year                   int
 	TeamId                 string
@@ -114,6 +115,10 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, ok := props["menu_id"]; ok {
 		params.MenuId = val
+	}
+
+	if val, ok := props["health_id"]; ok {
+		params.HealthId = val
 	}
 
 	y, w := time.Now().ISOWeek()

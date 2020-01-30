@@ -41,7 +41,6 @@ type MenuPatch struct {
 	Description *string `json:"description"`
 	WeekDay     *int    `json:"week_day"`
 	StartTime   *int64  `json:"start_time"`
-	Active      *bool   `json:"active"`
 }
 
 type MenusWithCount struct {

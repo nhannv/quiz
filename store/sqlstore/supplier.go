@@ -73,6 +73,7 @@ type SqlSupplierStores struct {
 	menu                 store.MenuStore
 	event                store.EventStore
 	medicine             store.MedicineStore
+	health             store.HealthStore
 	activityNote         store.ActivityNoteStore
 	team                 store.TeamStore
 	channel              store.ChannelStore
@@ -145,6 +146,7 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	supplier.stores.menu = NewSqlMenuStore(supplier)
 	supplier.stores.event = NewSqlEventStore(supplier)
 	supplier.stores.medicine = NewSqlMedicineStore(supplier)
+	supplier.stores.health = NewSqlHealthStore(supplier)
 	supplier.stores.activityNote = NewSqlActivityNoteStore(supplier)
 	supplier.stores.team = NewSqlTeamStore(supplier)
 	supplier.stores.channel = NewSqlChannelStore(supplier, metrics)
@@ -198,6 +200,7 @@ func NewSqlSupplier(settings model.SqlSettings, metrics einterfaces.MetricsInter
 	supplier.stores.menu.(*SqlMenuStore).CreateIndexesIfNotExists()
 	supplier.stores.event.(*SqlEventStore).CreateIndexesIfNotExists()
 	supplier.stores.medicine.(*SqlMedicineStore).CreateIndexesIfNotExists()
+	supplier.stores.health.(*SqlHealthStore).CreateIndexesIfNotExists()
 	supplier.stores.activityNote.(*SqlActivityNoteStore).CreateIndexesIfNotExists()
 	supplier.stores.team.(*SqlTeamStore).CreateIndexesIfNotExists()
 	supplier.stores.channel.(*SqlChannelStore).CreateIndexesIfNotExists()
@@ -971,6 +974,10 @@ func (ss *SqlSupplier) Event() store.EventStore {
 
 func (ss *SqlSupplier) Medicine() store.MedicineStore {
 	return ss.stores.medicine
+}
+
+func (ss *SqlSupplier) Health() store.HealthStore {
+	return ss.stores.health
 }
 
 func (ss *SqlSupplier) ActivityNote() store.ActivityNoteStore {
