@@ -266,8 +266,8 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.Menus = api.BaseRoutes.Class.PathPrefix("/menus").Subrouter()
 	api.BaseRoutes.Menu = api.BaseRoutes.ApiRoot.PathPrefix("/menus/{menu_id:[A-Za-z0-9]+}").Subrouter()
 
-	api.BaseRoutes.Events = api.BaseRoutes.ApiRoot.PathPrefix("/events").Subrouter()
-	api.BaseRoutes.Event = api.BaseRoutes.Events.PathPrefix("/{event_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.Events = api.BaseRoutes.Class.PathPrefix("/events").Subrouter()
+	api.BaseRoutes.Event = api.BaseRoutes.ApiRoot.PathPrefix("/events/{event_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.ClassMedicines = api.BaseRoutes.Class.PathPrefix("/medicines").Subrouter()
 	api.BaseRoutes.KidMedicines = api.BaseRoutes.Kid.PathPrefix("/medicines").Subrouter()

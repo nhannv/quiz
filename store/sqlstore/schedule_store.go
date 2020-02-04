@@ -24,7 +24,7 @@ func NewSqlScheduleStore(sqlStore SqlStore) store.ScheduleStore {
 		table.ColMap("Id").SetMaxSize(26)
 		table.ColMap("Week").SetMaxSize(2)
 		table.ColMap("Year").SetMaxSize(4)
-		table.ColMap("Subject").SetMaxSize(24)
+		table.ColMap("Subject").SetMaxSize(128)
 		table.ColMap("Description").SetMaxSize(128)
 		table.ColMap("WeekDay").SetMaxSize(1)
 		table.ColMap("StartTime").SetMaxSize(20)
