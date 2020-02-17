@@ -937,7 +937,6 @@ func (ss *SqlSupplier) GetAllConns() []*gorp.DbMap {
 }
 
 func (ss *SqlSupplier) Close() {
-	mlog.Info("Closing SqlStore")
 	ss.master.Db.Close()
 	for _, replica := range ss.replicas {
 		replica.Db.Close()

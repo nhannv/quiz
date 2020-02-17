@@ -97,6 +97,7 @@ var PERMISSION_VIEW_MEMBERS *Permission
 var PERMISSION_INVITE_GUEST *Permission
 var PERMISSION_PROMOTE_GUEST *Permission
 var PERMISSION_DEMOTE_TO_GUEST *Permission
+var PERMISSION_USE_CHANNEL_MENTIONS *Permission
 
 // General permission that encompasses all system admin functions
 // in the future this could be broken up to allow access to some
@@ -593,6 +594,13 @@ func initializePermissions() {
 		PERMISSION_SCOPE_SYSTEM,
 	}
 
+	PERMISSION_USE_CHANNEL_MENTIONS = &Permission{
+		"use_channel_mentions",
+		"authentication.permissions.use_channel_mentions.name",
+		"authentication.permissions.use_channel_mentions.description",
+		PERMISSION_SCOPE_CHANNEL,
+	}
+
 	ALL_PERMISSIONS = []*Permission{
 		PERMISSION_MANAGE_SCHOOL,
 		PERMISSION_CREATE_KID,
@@ -673,6 +681,7 @@ func initializePermissions() {
 		PERMISSION_INVITE_GUEST,
 		PERMISSION_PROMOTE_GUEST,
 		PERMISSION_DEMOTE_TO_GUEST,
+		PERMISSION_USE_CHANNEL_MENTIONS,
 	}
 }
 
