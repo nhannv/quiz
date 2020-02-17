@@ -15,11 +15,11 @@ func (a *App) CreateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 		return nil, err
 	}
 
-	if err = class.IsBelongToSchool(a.Session.SchoolId); err != nil {
+	if err = class.IsBelongToSchool(a.Session().SchoolId); err != nil {
 		return nil, model.NewAppError("CreateMenu", "api.menu.create_menu.invalid_class.app_error", nil, "", http.StatusBadRequest)
 	}
 
-	rmenu, err := a.Srv.Store.Menu().Save(menu)
+	rmenu, err := a.Srv().Store.Menu().Save(menu)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (a *App) CreateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 }
 
 func (a *App) CreateActivityNote(note *model.ActivityNote) (*model.ActivityNote, *model.AppError) {
-	rnote, err := a.Srv.Store.ActivityNote().Save(note)
+	rnote, err := a.Srv().Store.ActivityNote().Save(note)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (a *App) UpdateMenu(menu *model.Menu) (*model.Menu, *model.AppError) {
 }
 
 func (a *App) updateMenuUnsanitized(menu *model.Menu) (*model.Menu, *model.AppError) {
-	return a.Srv.Store.Menu().Update(menu)
+	return a.Srv().Store.Menu().Update(menu)
 }
 
 func (a *App) PatchMenu(menuId string, patch *model.MenuPatch) (*model.Menu, *model.AppError) {
@@ -78,9 +78,9 @@ func (a *App) PatchMenu(menuId string, patch *model.MenuPatch) (*model.Menu, *mo
 }
 
 func (a *App) GetMenu(menuId string) (*model.Menu, *model.AppError) {
-	return a.Srv.Store.Menu().Get(menuId)
+	return a.Srv().Store.Menu().Get(menuId)
 }
 
 func (a *App) GetMenus(week int, year int) ([]*model.Menu, *model.AppError) {
-	return a.Srv.Store.Menu().GetByWeek(week, year)
+	return a.Srv().Store.Menu().GetByWeek(week, year)
 }

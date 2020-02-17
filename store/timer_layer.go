@@ -16,6 +16,7 @@ import (
 type TimerLayer struct {
 	Store
 	Metrics                   einterfaces.MetricsInterface
+	ActivityNoteStore         ActivityNoteStore
 	AuditStore                AuditStore
 	BotStore                  BotStore
 	ChannelStore              ChannelStore
@@ -25,18 +26,25 @@ type TimerLayer struct {
 	CommandWebhookStore       CommandWebhookStore
 	ComplianceStore           ComplianceStore
 	EmojiStore                EmojiStore
+	EventStore                EventStore
 	FileInfoStore             FileInfoStore
 	GroupStore                GroupStore
+	HealthStore               HealthStore
 	JobStore                  JobStore
+	KidStore                  KidStore
 	LicenseStore              LicenseStore
 	LinkMetadataStore         LinkMetadataStore
+	MedicineStore             MedicineStore
+	MenuStore                 MenuStore
 	OAuthStore                OAuthStore
 	PluginStore               PluginStore
 	PostStore                 PostStore
 	PreferenceStore           PreferenceStore
 	ReactionStore             ReactionStore
 	RoleStore                 RoleStore
+	ScheduleStore             ScheduleStore
 	SchemeStore               SchemeStore
+	SchoolStore               SchoolStore
 	SessionStore              SessionStore
 	StatusStore               StatusStore
 	SystemStore               SystemStore
@@ -47,6 +55,10 @@ type TimerLayer struct {
 	UserAccessTokenStore      UserAccessTokenStore
 	UserTermsOfServiceStore   UserTermsOfServiceStore
 	WebhookStore              WebhookStore
+}
+
+func (s *TimerLayer) ActivityNote() ActivityNoteStore {
+	return s.ActivityNoteStore
 }
 
 func (s *TimerLayer) Audit() AuditStore {
@@ -85,6 +97,10 @@ func (s *TimerLayer) Emoji() EmojiStore {
 	return s.EmojiStore
 }
 
+func (s *TimerLayer) Event() EventStore {
+	return s.EventStore
+}
+
 func (s *TimerLayer) FileInfo() FileInfoStore {
 	return s.FileInfoStore
 }
@@ -93,8 +109,16 @@ func (s *TimerLayer) Group() GroupStore {
 	return s.GroupStore
 }
 
+func (s *TimerLayer) Health() HealthStore {
+	return s.HealthStore
+}
+
 func (s *TimerLayer) Job() JobStore {
 	return s.JobStore
+}
+
+func (s *TimerLayer) Kid() KidStore {
+	return s.KidStore
 }
 
 func (s *TimerLayer) License() LicenseStore {
@@ -103,6 +127,14 @@ func (s *TimerLayer) License() LicenseStore {
 
 func (s *TimerLayer) LinkMetadata() LinkMetadataStore {
 	return s.LinkMetadataStore
+}
+
+func (s *TimerLayer) Medicine() MedicineStore {
+	return s.MedicineStore
+}
+
+func (s *TimerLayer) Menu() MenuStore {
+	return s.MenuStore
 }
 
 func (s *TimerLayer) OAuth() OAuthStore {
@@ -129,8 +161,16 @@ func (s *TimerLayer) Role() RoleStore {
 	return s.RoleStore
 }
 
+func (s *TimerLayer) Schedule() ScheduleStore {
+	return s.ScheduleStore
+}
+
 func (s *TimerLayer) Scheme() SchemeStore {
 	return s.SchemeStore
+}
+
+func (s *TimerLayer) School() SchoolStore {
+	return s.SchoolStore
 }
 
 func (s *TimerLayer) Session() SessionStore {
@@ -171,6 +211,11 @@ func (s *TimerLayer) UserTermsOfService() UserTermsOfServiceStore {
 
 func (s *TimerLayer) Webhook() WebhookStore {
 	return s.WebhookStore
+}
+
+type TimerLayerActivityNoteStore struct {
+	ActivityNoteStore
+	Root *TimerLayer
 }
 
 type TimerLayerAuditStore struct {
@@ -218,6 +263,11 @@ type TimerLayerEmojiStore struct {
 	Root *TimerLayer
 }
 
+type TimerLayerEventStore struct {
+	EventStore
+	Root *TimerLayer
+}
+
 type TimerLayerFileInfoStore struct {
 	FileInfoStore
 	Root *TimerLayer
@@ -228,8 +278,18 @@ type TimerLayerGroupStore struct {
 	Root *TimerLayer
 }
 
+type TimerLayerHealthStore struct {
+	HealthStore
+	Root *TimerLayer
+}
+
 type TimerLayerJobStore struct {
 	JobStore
+	Root *TimerLayer
+}
+
+type TimerLayerKidStore struct {
+	KidStore
 	Root *TimerLayer
 }
 
@@ -240,6 +300,16 @@ type TimerLayerLicenseStore struct {
 
 type TimerLayerLinkMetadataStore struct {
 	LinkMetadataStore
+	Root *TimerLayer
+}
+
+type TimerLayerMedicineStore struct {
+	MedicineStore
+	Root *TimerLayer
+}
+
+type TimerLayerMenuStore struct {
+	MenuStore
 	Root *TimerLayer
 }
 
@@ -273,8 +343,18 @@ type TimerLayerRoleStore struct {
 	Root *TimerLayer
 }
 
+type TimerLayerScheduleStore struct {
+	ScheduleStore
+	Root *TimerLayer
+}
+
 type TimerLayerSchemeStore struct {
 	SchemeStore
+	Root *TimerLayer
+}
+
+type TimerLayerSchoolStore struct {
+	SchoolStore
 	Root *TimerLayer
 }
 
@@ -326,6 +406,22 @@ type TimerLayerUserTermsOfServiceStore struct {
 type TimerLayerWebhookStore struct {
 	WebhookStore
 	Root *TimerLayer
+}
+
+func (s *TimerLayerActivityNoteStore) Save(activityNote *model.ActivityNote) (*model.ActivityNote, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ActivityNoteStore.Save(activityNote)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ActivityNoteStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
 }
 
 func (s *TimerLayerAuditStore) Get(user_id string, offset int, limit int) (model.Audits, *model.AppError) {
@@ -1203,6 +1299,22 @@ func (s *TimerLayerChannelStore) GetTeamChannels(teamId string) (*model.ChannelL
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("ChannelStore.GetTeamChannels", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerChannelStore) GroupSyncedChannelCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ChannelStore.GroupSyncedChannelCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ChannelStore.GroupSyncedChannelCount", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -2335,6 +2447,118 @@ func (s *TimerLayerEmojiStore) Search(name string, prefixOnly bool, limit int) (
 	return resultVar0, resultVar1
 }
 
+func (s *TimerLayerEventStore) Get(id string) (*model.Event, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) GetByClass(classId string) ([]*model.Event, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.GetByClass(classId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.GetByClass", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) GetRegistration(eventId string, kidId string) (*model.EventRegistration, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.GetRegistration(eventId, kidId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.GetRegistration", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) GetRegistrationsByEvent(eventId string) ([]*model.EventRegistration, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.GetRegistrationsByEvent(eventId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.GetRegistrationsByEvent", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) GetRegistrationsByKid(kidId string) ([]*model.EventRegistration, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.GetRegistrationsByKid(kidId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.GetRegistrationsByKid", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) Save(event *model.Event) (*model.Event, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.Save(event)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerEventStore) Update(event *model.Event) (*model.Event, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.EventStore.Update(event)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EventStore.Update", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
 func (s *TimerLayerFileInfoStore) AttachToPost(fileId string, postId string, creatorId string) *model.AppError {
 	start := timemodule.Now()
 
@@ -2442,6 +2666,22 @@ func (s *TimerLayerFileInfoStore) GetForUser(userId string) ([]*model.FileInfo, 
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("FileInfoStore.GetForUser", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerFileInfoStore) GetWithOptions(page int, perPage int, opt *model.GetFileInfosOptions) ([]*model.FileInfo, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.FileInfoStore.GetWithOptions(page, perPage, opt)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("FileInfoStore.GetWithOptions", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -2733,6 +2973,22 @@ func (s *TimerLayerGroupStore) DeleteMember(groupID string, userID string) (*mod
 	return resultVar0, resultVar1
 }
 
+func (s *TimerLayerGroupStore) DistinctGroupMemberCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.GroupStore.DistinctGroupMemberCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.DistinctGroupMemberCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
 func (s *TimerLayerGroupStore) Get(groupID string) (*model.Group, *model.AppError) {
 	start := timemodule.Now()
 
@@ -2957,6 +3213,70 @@ func (s *TimerLayerGroupStore) GetMemberUsersPage(groupID string, page int, perP
 	return resultVar0, resultVar1
 }
 
+func (s *TimerLayerGroupStore) GroupChannelCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.GroupStore.GroupChannelCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.GroupChannelCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerGroupStore) GroupCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.GroupStore.GroupCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.GroupCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerGroupStore) GroupMemberCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.GroupStore.GroupMemberCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.GroupMemberCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerGroupStore) GroupTeamCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.GroupStore.GroupTeamCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.GroupTeamCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
 func (s *TimerLayerGroupStore) PermanentDeleteMembersByUser(userId string) *model.AppError {
 	start := timemodule.Now()
 
@@ -3081,6 +3401,70 @@ func (s *TimerLayerGroupStore) UpsertMember(groupID string, userID string) (*mod
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("GroupStore.UpsertMember", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerHealthStore) Get(id string) (*model.Health, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.HealthStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("HealthStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerHealthStore) GetAll(kidId string) ([]*model.Health, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.HealthStore.GetAll(kidId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("HealthStore.GetAll", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerHealthStore) Save(health *model.Health) (*model.Health, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.HealthStore.Save(health)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("HealthStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerHealthStore) Update(health *model.Health) (*model.Health, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.HealthStore.Update(health)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("HealthStore.Update", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -3277,6 +3661,165 @@ func (s *TimerLayerJobStore) UpdateStatusOptimistically(id string, currentStatus
 	return resultVar0, resultVar1
 }
 
+func (s *TimerLayerKidStore) ClearCaches() {
+	start := timemodule.Now()
+
+	s.KidStore.ClearCaches()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if true {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.ClearCaches", success, elapsed)
+	}
+}
+
+func (s *TimerLayerKidStore) Get(id string) (*model.Kid, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) GetActiveGuardianCount(kidId string) (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.GetActiveGuardianCount(kidId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.GetActiveGuardianCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) GetGuardian(kidId string, userId string) (*model.KidGuardian, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.GetGuardian(kidId, userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.GetGuardian", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) GetGuardiansByUser(userId string) ([]*model.KidGuardian, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.GetGuardiansByUser(userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.GetGuardiansByUser", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) GetKidsByUserId(userId string) ([]*model.Kid, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.GetKidsByUserId(userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.GetKidsByUserId", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) Save(kid *model.Kid) (*model.Kid, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.Save(kid)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) SaveGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.SaveGuardian(guardian)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.SaveGuardian", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) Update(kid *model.Kid) (*model.Kid, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.Update(kid)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.Update", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerKidStore) UpdateGuardian(guardian *model.KidGuardian) (*model.KidGuardian, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.KidStore.UpdateGuardian(guardian)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("KidStore.UpdateGuardian", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
 func (s *TimerLayerLicenseStore) Get(id string) (*model.LicenseRecord, *model.AppError) {
 	start := timemodule.Now()
 
@@ -3337,6 +3880,182 @@ func (s *TimerLayerLinkMetadataStore) Save(linkMetadata *model.LinkMetadata) (*m
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("LinkMetadataStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) GetMedicinesByRequest(requestId string) ([]*model.Medicine, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.GetMedicinesByRequest(requestId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.GetMedicinesByRequest", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) GetRequest(id string) (*model.MedicineRequest, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.GetRequest(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.GetRequest", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) GetRequestsByClass(classId string) ([]*model.MedicineRequest, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.GetRequestsByClass(classId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.GetRequestsByClass", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) GetRequestsByKid(kidId string) ([]*model.MedicineRequest, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.GetRequestsByKid(kidId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.GetRequestsByKid", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) SaveMedicine(medicine *model.Medicine) (*model.Medicine, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.SaveMedicine(medicine)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.SaveMedicine", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) SaveRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.SaveRequest(medicineRequest)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.SaveRequest", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMedicineStore) UpdateRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MedicineStore.UpdateRequest(medicineRequest)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MedicineStore.UpdateRequest", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMenuStore) Get(id string) (*model.Menu, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MenuStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MenuStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMenuStore) GetByWeek(week int, year int) ([]*model.Menu, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MenuStore.GetByWeek(week, year)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MenuStore.GetByWeek", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMenuStore) Save(menu *model.Menu) (*model.Menu, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MenuStore.Save(menu)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MenuStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerMenuStore) Update(menu *model.Menu) (*model.Menu, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.MenuStore.Update(menu)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("MenuStore.Update", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -4172,10 +4891,10 @@ func (s *TimerLayerPostStore) GetPostsSince(options model.GetPostsSinceOptions, 
 	return resultVar0, resultVar1
 }
 
-func (s *TimerLayerPostStore) GetRepliesForExport(parentId string) ([]*model.ReplyForExport, *model.AppError) {
+func (s *TimerLayerPostStore) GetRepliesForExport(guardianId string) ([]*model.ReplyForExport, *model.AppError) {
 	start := timemodule.Now()
 
-	resultVar0, resultVar1 := s.PostStore.GetRepliesForExport(parentId)
+	resultVar0, resultVar1 := s.PostStore.GetRepliesForExport(guardianId)
 
 	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
 	if s.Root.Metrics != nil {
@@ -4683,6 +5402,70 @@ func (s *TimerLayerRoleStore) Save(role *model.Role) (*model.Role, *model.AppErr
 	return resultVar0, resultVar1
 }
 
+func (s *TimerLayerScheduleStore) Get(id string) (*model.Schedule, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ScheduleStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ScheduleStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerScheduleStore) GetByWeek(week int, year int, classId string) ([]*model.Schedule, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ScheduleStore.GetByWeek(week, year, classId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ScheduleStore.GetByWeek", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerScheduleStore) Save(schedule *model.Schedule) (*model.Schedule, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ScheduleStore.Save(schedule)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ScheduleStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerScheduleStore) Update(schedule *model.Schedule) (*model.Schedule, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.ScheduleStore.Update(schedule)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("ScheduleStore.Update", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
 func (s *TimerLayerSchemeStore) Delete(schemeId string) (*model.Scheme, *model.AppError) {
 	start := timemodule.Now()
 
@@ -4775,6 +5558,325 @@ func (s *TimerLayerSchemeStore) Save(scheme *model.Scheme) (*model.Scheme, *mode
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("SchemeStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) ClearCaches() {
+	start := timemodule.Now()
+
+	s.SchoolStore.ClearCaches()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if true {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.ClearCaches", success, elapsed)
+	}
+}
+
+func (s *TimerLayerSchoolStore) Get(id string) (*model.School, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.Get(id)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.Get", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetActiveMemberCount(schoolId string, restrictions *model.ViewUsersRestrictions) (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetActiveMemberCount(schoolId, restrictions)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetActiveMemberCount", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetBranch(branchId string) (*model.Branch, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetBranch(branchId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetBranch", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetBranches(schoolId string) ([]*model.Branch, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetBranches(schoolId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetBranches", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetClass(classId string) (*model.Class, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetClass(classId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetClass", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetClasses(schoolId string) ([]*model.Class, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetClasses(schoolId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetClasses", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetClassesByBranch(branchId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetClassesByBranch", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetMember(schoolId string, userId string) (*model.SchoolMember, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetMember(schoolId, userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetMember", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetSchoolsByUserId(userId string) ([]*model.School, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetSchoolsByUserId(userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetSchoolsByUserId", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) GetSchoolsForUser(userId string) ([]*model.SchoolMember, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.GetSchoolsForUser(userId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.GetSchoolsForUser", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) RemoveBranch(branchId string) *model.AppError {
+	start := timemodule.Now()
+
+	resultVar0 := s.SchoolStore.RemoveBranch(branchId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar0 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.RemoveBranch", success, elapsed)
+	}
+	return resultVar0
+}
+
+func (s *TimerLayerSchoolStore) RemoveClass(classId string) *model.AppError {
+	start := timemodule.Now()
+
+	resultVar0 := s.SchoolStore.RemoveClass(classId)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar0 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.RemoveClass", success, elapsed)
+	}
+	return resultVar0
+}
+
+func (s *TimerLayerSchoolStore) Save(school *model.School) (*model.School, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.Save(school)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.Save", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.SaveBranch(branch)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.SaveBranch", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) SaveClass(class *model.Class) (*model.Class, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.SaveClass(class)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.SaveClass", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) SaveMember(member *model.SchoolMember, maxUsersPerSchool int) (*model.SchoolMember, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.SaveMember(member, maxUsersPerSchool)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.SaveMember", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) Update(school *model.School) (*model.School, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.Update(school)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.Update", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerSchoolStore) UpdateLastSchoolIconUpdate(schoolId string, curTime int64) *model.AppError {
+	start := timemodule.Now()
+
+	resultVar0 := s.SchoolStore.UpdateLastSchoolIconUpdate(schoolId, curTime)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar0 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.UpdateLastSchoolIconUpdate", success, elapsed)
+	}
+	return resultVar0
+}
+
+func (s *TimerLayerSchoolStore) UpdateMember(member *model.SchoolMember) (*model.SchoolMember, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.SchoolStore.UpdateMember(member)
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("SchoolStore.UpdateMember", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -5653,6 +6755,22 @@ func (s *TimerLayerTeamStore) GetUserTeamIds(userId string, allowFromCache bool)
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("TeamStore.GetUserTeamIds", success, elapsed)
+	}
+	return resultVar0, resultVar1
+}
+
+func (s *TimerLayerTeamStore) GroupSyncedTeamCount() (int64, *model.AppError) {
+	start := timemodule.Now()
+
+	resultVar0, resultVar1 := s.TeamStore.GroupSyncedTeamCount()
+
+	elapsed := float64(timemodule.Since(start)) / float64(timemodule.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if resultVar1 == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("TeamStore.GroupSyncedTeamCount", success, elapsed)
 	}
 	return resultVar0, resultVar1
 }
@@ -7723,6 +8841,7 @@ func NewTimerLayer(childStore Store, metrics einterfaces.MetricsInterface) *Time
 		Metrics: metrics,
 	}
 
+	newStore.ActivityNoteStore = &TimerLayerActivityNoteStore{ActivityNoteStore: childStore.ActivityNote(), Root: &newStore}
 	newStore.AuditStore = &TimerLayerAuditStore{AuditStore: childStore.Audit(), Root: &newStore}
 	newStore.BotStore = &TimerLayerBotStore{BotStore: childStore.Bot(), Root: &newStore}
 	newStore.ChannelStore = &TimerLayerChannelStore{ChannelStore: childStore.Channel(), Root: &newStore}
@@ -7732,18 +8851,25 @@ func NewTimerLayer(childStore Store, metrics einterfaces.MetricsInterface) *Time
 	newStore.CommandWebhookStore = &TimerLayerCommandWebhookStore{CommandWebhookStore: childStore.CommandWebhook(), Root: &newStore}
 	newStore.ComplianceStore = &TimerLayerComplianceStore{ComplianceStore: childStore.Compliance(), Root: &newStore}
 	newStore.EmojiStore = &TimerLayerEmojiStore{EmojiStore: childStore.Emoji(), Root: &newStore}
+	newStore.EventStore = &TimerLayerEventStore{EventStore: childStore.Event(), Root: &newStore}
 	newStore.FileInfoStore = &TimerLayerFileInfoStore{FileInfoStore: childStore.FileInfo(), Root: &newStore}
 	newStore.GroupStore = &TimerLayerGroupStore{GroupStore: childStore.Group(), Root: &newStore}
+	newStore.HealthStore = &TimerLayerHealthStore{HealthStore: childStore.Health(), Root: &newStore}
 	newStore.JobStore = &TimerLayerJobStore{JobStore: childStore.Job(), Root: &newStore}
+	newStore.KidStore = &TimerLayerKidStore{KidStore: childStore.Kid(), Root: &newStore}
 	newStore.LicenseStore = &TimerLayerLicenseStore{LicenseStore: childStore.License(), Root: &newStore}
 	newStore.LinkMetadataStore = &TimerLayerLinkMetadataStore{LinkMetadataStore: childStore.LinkMetadata(), Root: &newStore}
+	newStore.MedicineStore = &TimerLayerMedicineStore{MedicineStore: childStore.Medicine(), Root: &newStore}
+	newStore.MenuStore = &TimerLayerMenuStore{MenuStore: childStore.Menu(), Root: &newStore}
 	newStore.OAuthStore = &TimerLayerOAuthStore{OAuthStore: childStore.OAuth(), Root: &newStore}
 	newStore.PluginStore = &TimerLayerPluginStore{PluginStore: childStore.Plugin(), Root: &newStore}
 	newStore.PostStore = &TimerLayerPostStore{PostStore: childStore.Post(), Root: &newStore}
 	newStore.PreferenceStore = &TimerLayerPreferenceStore{PreferenceStore: childStore.Preference(), Root: &newStore}
 	newStore.ReactionStore = &TimerLayerReactionStore{ReactionStore: childStore.Reaction(), Root: &newStore}
 	newStore.RoleStore = &TimerLayerRoleStore{RoleStore: childStore.Role(), Root: &newStore}
+	newStore.ScheduleStore = &TimerLayerScheduleStore{ScheduleStore: childStore.Schedule(), Root: &newStore}
 	newStore.SchemeStore = &TimerLayerSchemeStore{SchemeStore: childStore.Scheme(), Root: &newStore}
+	newStore.SchoolStore = &TimerLayerSchoolStore{SchoolStore: childStore.School(), Root: &newStore}
 	newStore.SessionStore = &TimerLayerSessionStore{SessionStore: childStore.Session(), Root: &newStore}
 	newStore.StatusStore = &TimerLayerStatusStore{StatusStore: childStore.Status(), Root: &newStore}
 	newStore.SystemStore = &TimerLayerSystemStore{SystemStore: childStore.System(), Root: &newStore}

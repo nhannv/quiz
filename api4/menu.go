@@ -39,7 +39,7 @@ func createMenu(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	menu.ClassId = c.Params.ClassId
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.Err = model.NewAppError("createMenu", "api.menu.is_class_manage_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -67,9 +67,9 @@ func createNote(c *Context, w http.ResponseWriter, r *http.Request) {
 	activityNote.KidId = c.Params.KidId
 	activityNote.Type = model.ACTIVITY_TYPE_MENU
 	activityNote.ActivityId = c.Params.MenuId
-	activityNote.UserId = c.App.Session.UserId
+	activityNote.UserId = c.App.Session().UserId
 
-	if !c.App.SessionHasPermissionTeacherToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_ACTIVITY) {
+	if !c.App.SessionHasPermissionTeacherToKid(*c.App.Session(), c.Params.KidId, model.PERMISSION_MANAGE_ACTIVITY) {
 		c.Err = model.NewAppError("createActivityNote", "api.menu.is_kid_manage_activity_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -132,7 +132,7 @@ func updateMenu(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}
@@ -159,7 +159,7 @@ func patchMenu(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}

@@ -86,7 +86,7 @@ func (c *Context) IsSystemAdmin() bool {
 }
 
 func (c *Context) IsSchoolAdmin() bool {
-	return c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_SCHOOL)
+	return c.App.SessionHasPermissionTo(*c.App.Session(), model.PERMISSION_MANAGE_SCHOOL)
 }
 
 func (c *Context) SessionRequired() {

@@ -9,7 +9,7 @@ import (
 
 func (a *App) CreateHealth(health *model.Health) (*model.Health, *model.AppError) {
 
-	rhealth, err := a.Srv.Store.Health().Save(health)
+	rhealth, err := a.Srv().Store.Health().Save(health)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (a *App) UpdateHealth(health *model.Health) (*model.Health, *model.AppError
 }
 
 func (a *App) updateHealthUnsanitized(health *model.Health) (*model.Health, *model.AppError) {
-	return a.Srv.Store.Health().Update(health)
+	return a.Srv().Store.Health().Update(health)
 }
 
 func (a *App) PatchHealth(healthId string, patch *model.HealthPatch) (*model.Health, *model.AppError) {
@@ -56,9 +56,9 @@ func (a *App) PatchHealth(healthId string, patch *model.HealthPatch) (*model.Hea
 }
 
 func (a *App) GetHealth(healthId string) (*model.Health, *model.AppError) {
-	return a.Srv.Store.Health().Get(healthId)
+	return a.Srv().Store.Health().Get(healthId)
 }
 
 func (a *App) GetHealths(kidId string) ([]*model.Health, *model.AppError) {
-	return a.Srv.Store.Health().GetAll(kidId)
+	return a.Srv().Store.Health().GetAll(kidId)
 }

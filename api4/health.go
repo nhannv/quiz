@@ -38,7 +38,7 @@ func createHealth(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	health.KidId = c.Params.KidId
 
-	if !c.App.SessionHasPermissionToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_KID) {
+	if !c.App.SessionHasPermissionToKid(*c.App.Session(), c.Params.KidId, model.PERMISSION_MANAGE_KID) {
 		c.Err = model.NewAppError("createHealth", "api.health.is_kid_manage_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -104,7 +104,7 @@ func updateHealth(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}
@@ -131,7 +131,7 @@ func patchHealth(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}

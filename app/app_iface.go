@@ -110,6 +110,7 @@ type AppIface interface {
 	Context() context.Context
 	ConvertUserToBot(user *model.User) (*model.Bot, *model.AppError)
 	CopyFileInfos(userId string, fileIds []string) ([]string, *model.AppError)
+	CreateActivityNote(note *model.ActivityNote) (*model.ActivityNote, *model.AppError)
 	CreateBasicUser(client *model.Client4) *model.AppError
 	CreateBot(bot *model.Bot) (*model.Bot, *model.AppError)
 	CreateChannel(channel *model.Channel, addMember bool) (*model.Channel, *model.AppError)
@@ -120,11 +121,17 @@ type AppIface interface {
 	CreateDefaultChannels(teamID string) ([]*model.Channel, *model.AppError)
 	CreateDefaultMemberships(since int64) error
 	CreateEmoji(sessionUserId string, emoji *model.Emoji, multiPartImageData *multipart.Form) (*model.Emoji, *model.AppError)
+	CreateEvent(event *model.Event) (*model.Event, *model.AppError)
 	CreateGroup(group *model.Group) (*model.Group, *model.AppError)
 	CreateGroupChannel(userIds []string, creatorId string) (*model.Channel, *model.AppError)
 	CreateGuest(user *model.User) (*model.User, *model.AppError)
+	CreateHealth(health *model.Health) (*model.Health, *model.AppError)
 	CreateIncomingWebhookForChannel(creatorId string, channel *model.Channel, hook *model.IncomingWebhook) (*model.IncomingWebhook, *model.AppError)
 	CreateJob(job *model.Job) (*model.Job, *model.AppError)
+	CreateKid(kid *model.Kid) (*model.Kid, *model.AppError)
+	CreateKidWithUser(kid *model.Kid, userId string) (*model.Kid, *model.AppError)
+	CreateMedicineRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError)
+	CreateMenu(menu *model.Menu) (*model.Menu, *model.AppError)
 	CreateOAuthApp(app *model.OAuthApp) (*model.OAuthApp, *model.AppError)
 	CreateOAuthStateToken(extra string) (*model.Token, *model.AppError)
 	CreateOAuthUser(service string, userData io.Reader, teamId string) (*model.User, *model.AppError)
@@ -135,7 +142,10 @@ type AppIface interface {
 	CreatePostMissingChannel(post *model.Post, triggerWebhooks bool) (*model.Post, *model.AppError)
 	CreatePushNotificationsHub()
 	CreateRole(role *model.Role) (*model.Role, *model.AppError)
+	CreateSchedule(schedule *model.Schedule) (*model.Schedule, *model.AppError)
 	CreateScheme(scheme *model.Scheme) (*model.Scheme, *model.AppError)
+	CreateSchool(school *model.School) (*model.School, *model.AppError)
+	CreateSchoolWithUser(school *model.School, userId string) (*model.School, *model.AppError)
 	CreateSession(session *model.Session) (*model.Session, *model.AppError)
 	CreateTeam(team *model.Team) (*model.Team, *model.AppError)
 	CreateTeamWithUser(team *model.Team, userId string) (*model.Team, *model.AppError)
@@ -143,6 +153,7 @@ type AppIface interface {
 	CreateUser(user *model.User) (*model.User, *model.AppError)
 	CreateUserAccessToken(token *model.UserAccessToken) (*model.UserAccessToken, *model.AppError)
 	CreateUserAsAdmin(user *model.User) (*model.User, *model.AppError)
+	CreateUserFromRegister(user *model.User, isSchool bool) (*model.User, *model.AppError)
 	CreateUserFromSignup(user *model.User) (*model.User, *model.AppError)
 	CreateUserWithInviteId(user *model.User, inviteId string) (*model.User, *model.AppError)
 	CreateUserWithToken(user *model.User, token *model.Token) (*model.User, *model.AppError)
@@ -188,7 +199,7 @@ type AppIface interface {
 	DoEmojisPermissionsMigration()
 	DoGuestRolesCreationMigration()
 	DoLocalRequest(rawURL string, body []byte) (*http.Response, *model.AppError)
-	DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string) *model.AppError
+	DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string, schoolId string) *model.AppError
 	DoPermissionsMigrations() *model.AppError
 	DoPostAction(postId, actionId, userId, selectedOption string) (string, *model.AppError)
 	DoPostActionWithCookie(postId, actionId, userId, selectedOption string, cookie *model.PostActionCookie) (string, *model.AppError)
@@ -247,6 +258,8 @@ type AppIface interface {
 	GetBot(botUserId string, includeDeleted bool) (*model.Bot, *model.AppError)
 	GetBotIconImage(botUserId string) ([]byte, *model.AppError)
 	GetBots(options *model.BotGetOptions) (model.BotList, *model.AppError)
+	GetBranch(branchId string) (*model.Branch, *model.AppError)
+	GetBranches(schoolId string) ([]*model.Branch, *model.AppError)
 	GetBrandImage() ([]byte, *model.AppError)
 	GetBulkReactionsForPosts(postIds []string) (map[string][]*model.Reaction, *model.AppError)
 	GetChannel(channelId string) (*model.Channel, *model.AppError)
@@ -269,6 +282,9 @@ type AppIface interface {
 	GetChannelsForSchemePage(scheme *model.Scheme, page int, perPage int) (model.ChannelList, *model.AppError)
 	GetChannelsForUser(teamId string, userId string, includeDeleted bool) (*model.ChannelList, *model.AppError)
 	GetChannelsUserNotIn(teamId string, userId string, offset int, limit int) (*model.ChannelList, *model.AppError)
+	GetClass(classId string) (*model.Class, *model.AppError)
+	GetClasses(schoolId string) ([]*model.Class, *model.AppError)
+	GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError)
 	GetClusterId() string
 	GetClusterPluginStatuses() (model.PluginStatuses, *model.AppError)
 	GetClusterStatus() []*model.ClusterInfo
@@ -287,8 +303,11 @@ type AppIface interface {
 	GetEmojiList(page, perPage int, sort string) ([]*model.Emoji, *model.AppError)
 	GetEmojiStaticUrl(emojiName string) (string, *model.AppError)
 	GetEnvironmentConfig() map[string]interface{}
+	GetEvent(eventId string) (*model.Event, *model.AppError)
+	GetEvents(classId string) ([]*model.Event, *model.AppError)
 	GetFile(fileId string) ([]byte, *model.AppError)
 	GetFileInfo(fileId string) (*model.FileInfo, *model.AppError)
+	GetFileInfos(page, perPage int, opt *model.GetFileInfosOptions) ([]*model.FileInfo, *model.AppError)
 	GetFileInfosForPost(postId string, fromMaster bool) ([]*model.FileInfo, *model.AppError)
 	GetFileInfosForPostWithMigration(postId string) ([]*model.FileInfo, *model.AppError)
 	GetFlaggedPosts(userId string, offset int, limit int) (*model.PostList, *model.AppError)
@@ -308,6 +327,8 @@ type AppIface interface {
 	GetGroupsBySource(groupSource model.GroupSource) ([]*model.Group, *model.AppError)
 	GetGroupsByTeam(teamId string, opts model.GroupSearchOpts) ([]*model.GroupWithSchemeAdmin, int, *model.AppError)
 	GetGroupsByUserId(userId string) ([]*model.Group, *model.AppError)
+	GetHealth(healthId string) (*model.Health, *model.AppError)
+	GetHealths(kidId string) ([]*model.Health, *model.AppError)
 	GetHubForUserId(userId string) *Hub
 	GetIncomingWebhook(hookId string) (*model.IncomingWebhook, *model.AppError)
 	GetIncomingWebhooksForTeamPage(teamId string, page, perPage int) ([]*model.IncomingWebhook, *model.AppError)
@@ -319,11 +340,18 @@ type AppIface interface {
 	GetJobsByType(jobType string, offset int, limit int) ([]*model.Job, *model.AppError)
 	GetJobsByTypePage(jobType string, page int, perPage int) ([]*model.Job, *model.AppError)
 	GetJobsPage(page int, perPage int) ([]*model.Job, *model.AppError)
+	GetKid(kidId string) (*model.Kid, *model.AppError)
+	GetKidAvatar(kid *model.Kid) ([]byte, *model.AppError)
+	GetKidsForUser(userId string) ([]*model.Kid, *model.AppError)
 	GetLatestTermsOfService() (*model.TermsOfService, *model.AppError)
 	GetLdapGroup(ldapGroupID string) (*model.Group, *model.AppError)
 	GetLogs(page, perPage int) ([]string, *model.AppError)
 	GetLogsSkipSend(page, perPage int) ([]string, *model.AppError)
 	GetMarketplacePlugins(filter *model.MarketplacePluginFilter) ([]*model.MarketplacePlugin, *model.AppError)
+	GetMedicineRequest(medicineRequestId string) (*model.MedicineRequest, *model.AppError)
+	GetMedicineRequestsByKid(kidId string) ([]*model.MedicineRequest, *model.AppError)
+	GetMenu(menuId string) (*model.Menu, *model.AppError)
+	GetMenus(week int, year int) ([]*model.Menu, *model.AppError)
 	GetMessageForNotification(post *model.Post, translateFunc i18n.TranslateFunc) string
 	GetMultipleEmojiByName(names []string) ([]*model.Emoji, *model.AppError)
 	GetNewUsersForTeamPage(teamId string, page, perPage int, asAdmin bool, viewRestrictions *model.ViewUsersRestrictions) ([]*model.User, *model.AppError)
@@ -389,12 +417,17 @@ type AppIface interface {
 	GetSanitizeOptions(asAdmin bool) map[string]bool
 	GetSanitizedClientLicense() map[string]string
 	GetSanitizedConfig() *model.Config
+	GetSchedule(scheduleId string) (*model.Schedule, *model.AppError)
+	GetSchedules(week int, year int, classId string) ([]*model.Schedule, *model.AppError)
 	GetScheme(id string) (*model.Scheme, *model.AppError)
 	GetSchemeByName(name string) (*model.Scheme, *model.AppError)
 	GetSchemeRolesForChannel(channelId string) (string, string, string, *model.AppError)
 	GetSchemeRolesForTeam(teamId string) (string, string, string, *model.AppError)
 	GetSchemes(scope string, offset int, limit int) ([]*model.Scheme, *model.AppError)
 	GetSchemesPage(scope string, page int, perPage int) ([]*model.Scheme, *model.AppError)
+	GetSchool(schoolId string) (*model.School, *model.AppError)
+	GetSchoolIcon(school *model.School) ([]byte, *model.AppError)
+	GetSchoolsForUser(userId string) ([]*model.School, *model.AppError)
 	GetSession(token string) (*model.Session, *model.AppError)
 	GetSessionById(sessionId string) (*model.Session, *model.AppError)
 	GetSessions(userId string) ([]*model.Session, *model.AppError)
@@ -518,6 +551,8 @@ type AppIface interface {
 	IsUsernameTaken(name string) bool
 	JoinChannel(channel *model.Channel, userId string) *model.AppError
 	JoinDefaultChannels(teamId string, user *model.User, shouldBeAdmin bool, userRequestorId string) *model.AppError
+	JoinUserToKid(kid *model.Kid, user *model.User, userRequestorId string) *model.AppError
+	JoinUserToSchool(school *model.School, user *model.User, userRequestorId string) *model.AppError
 	JoinUserToTeam(team *model.Team, user *model.User, userRequestorId string) *model.AppError
 	Ldap() einterfaces.LdapInterface
 	LeaveChannel(channelId string, userId string) *model.AppError
@@ -560,9 +595,16 @@ type AppIface interface {
 	OverrideIconURLIfEmoji(post *model.Post)
 	PatchBot(botUserId string, botPatch *model.BotPatch) (*model.Bot, *model.AppError)
 	PatchChannel(channel *model.Channel, patch *model.ChannelPatch, userId string) (*model.Channel, *model.AppError)
+	PatchEvent(eventId string, patch *model.EventPatch) (*model.Event, *model.AppError)
+	PatchHealth(healthId string, patch *model.HealthPatch) (*model.Health, *model.AppError)
+	PatchKid(kidId string, patch *model.KidPatch) (*model.Kid, *model.AppError)
+	PatchMedicineRequest(medicineRequestId string, patch *model.MedicineRequestPatch) (*model.MedicineRequest, *model.AppError)
+	PatchMenu(menuId string, patch *model.MenuPatch) (*model.Menu, *model.AppError)
 	PatchPost(postId string, patch *model.PostPatch) (*model.Post, *model.AppError)
 	PatchRole(role *model.Role, patch *model.RolePatch) (*model.Role, *model.AppError)
+	PatchSchedule(scheduleId string, patch *model.SchedulePatch) (*model.Schedule, *model.AppError)
 	PatchScheme(scheme *model.Scheme, patch *model.SchemePatch) (*model.Scheme, *model.AppError)
+	PatchSchool(schoolId string, patch *model.SchoolPatch) (*model.School, *model.AppError)
 	PatchTeam(teamId string, patch *model.TeamPatch) (*model.Team, *model.AppError)
 	PatchUser(userId string, patch *model.UserPatch, asAdmin bool) (*model.User, *model.AppError)
 	Path() string
@@ -596,8 +638,11 @@ type AppIface interface {
 	RegenOutgoingWebhookToken(hook *model.OutgoingWebhook) (*model.OutgoingWebhook, *model.AppError)
 	RegenerateOAuthAppSecret(app *model.OAuthApp) (*model.OAuthApp, *model.AppError)
 	RegenerateTeamInviteId(teamId string) (*model.Team, *model.AppError)
+	Register(user *model.User, isSchool bool) (*model.User, *model.AppError)
 	RegisterPluginCommand(pluginId string, command *model.Command) error
 	ReloadConfig() error
+	RemoveBranch(branchId string) *model.AppError
+	RemoveClass(classId string) *model.AppError
 	RemoveConfigListener(id string)
 	RemoveFile(path string) *model.AppError
 	RemoveLicense() *model.AppError
@@ -607,11 +652,13 @@ type AppIface interface {
 	RemoveSamlIdpCertificate() *model.AppError
 	RemoveSamlPrivateCertificate() *model.AppError
 	RemoveSamlPublicCertificate() *model.AppError
+	RemoveSchoolIcon(schoolId string) *model.AppError
 	RemoveTeamIcon(teamId string) *model.AppError
 	RemoveTeamMemberFromTeam(teamMember *model.TeamMember, requestorId string) *model.AppError
 	RemoveUserFromChannel(userIdToRemove string, removerUserId string, channel *model.Channel) *model.AppError
 	RemoveUserFromTeam(teamId string, userId string, requestorId string) *model.AppError
 	RenameChannel(channel *model.Channel, newChannelName string, newDisplayName string) (*model.Channel, *model.AppError)
+	RenameSchool(school *model.School, newSchoolName string, newDisplayName string) (*model.School, *model.AppError)
 	RenameTeam(team *model.Team, newTeamName string, newDisplayName string) (*model.Team, *model.AppError)
 	RequestId() string
 	ResetPasswordFromToken(userSuppliedTokenString, newPassword string) *model.AppError
@@ -630,10 +677,14 @@ type AppIface interface {
 	RolesGrantPermission(roleNames []string, permissionId string) bool
 	Saml() einterfaces.SamlInterface
 	SanitizeProfile(user *model.User, asAdmin bool)
+	SanitizeSchool(session model.Session, school *model.School) *model.School
+	SanitizeSchools(session model.Session, schools []*model.School) []*model.School
 	SanitizeTeam(session model.Session, team *model.Team) *model.Team
 	SanitizeTeams(session model.Session, teams []*model.Team) []*model.Team
 	SaveAndBroadcastStatus(status *model.Status)
+	SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError)
 	SaveBrandImage(imageData *multipart.FileHeader) *model.AppError
+	SaveClass(class *model.Class) (*model.Class, *model.AppError)
 	SaveComplianceReport(job *model.Compliance) (*model.Compliance, *model.AppError)
 	SaveConfig(newCfg *model.Config, sendConfigChangeClusterMessage bool) *model.AppError
 	SaveLicense(licenseBytes []byte) (*model.License, *model.AppError)
@@ -690,10 +741,13 @@ type AppIface interface {
 	ServerBusyStateChanged(sbs *model.ServerBusyState)
 	Session() *model.Session
 	SessionCacheLength() int
+	SessionHasPermissionTeacherToKid(session model.Session, kidId string, permission *model.Permission) bool
 	SessionHasPermissionTo(session model.Session, permission *model.Permission) bool
 	SessionHasPermissionToChannel(session model.Session, channelId string, permission *model.Permission) bool
 	SessionHasPermissionToChannelByPost(session model.Session, postId string, permission *model.Permission) bool
+	SessionHasPermissionToKid(session model.Session, kidId string, permission *model.Permission) bool
 	SessionHasPermissionToManageBot(session model.Session, botUserId string) *model.AppError
+	SessionHasPermissionToSchool(session model.Session, schoolId string, permission *model.Permission) bool
 	SessionHasPermissionToTeam(session model.Session, teamId string, permission *model.Permission) bool
 	SessionHasPermissionToUser(session model.Session, userId string) bool
 	SessionHasPermissionToUserOrBot(session model.Session, userId string) bool
@@ -707,6 +761,9 @@ type AppIface interface {
 	SetDefaultProfileImage(user *model.User) *model.AppError
 	SetDiagnosticId(id string)
 	SetIpAddress(s string)
+	SetKidAvatar(kidId string, imageData *multipart.FileHeader) *model.AppError
+	SetKidAvatarFromFile(kid *model.Kid, file io.Reader) *model.AppError
+	SetKidAvatarFromMultiPartFile(kidId string, file multipart.File) *model.AppError
 	SetLicense(license *model.License) bool
 	SetLog(l *mlog.Logger)
 	SetPath(s string)
@@ -720,6 +777,9 @@ type AppIface interface {
 	SetProfileImageFromMultiPartFile(userId string, file multipart.File) *model.AppError
 	SetRequestId(s string)
 	SetSamlIdpCertificateFromMetadata(data []byte) *model.AppError
+	SetSchoolIcon(schoolId string, imageData *multipart.FileHeader) *model.AppError
+	SetSchoolIconFromFile(school *model.School, file io.Reader) *model.AppError
+	SetSchoolIconFromMultiPartFile(schoolId string, file multipart.File) *model.AppError
 	SetServer(srv *Server)
 	SetSession(s *model.Session)
 	SetStatusAwayIfNeeded(userId string, manual bool)
@@ -783,10 +843,15 @@ type AppIface interface {
 	UpdateCommand(oldCmd, updatedCmd *model.Command) (*model.Command, *model.AppError)
 	UpdateConfig(f func(*model.Config))
 	UpdateEphemeralPost(userId string, post *model.Post) *model.Post
+	UpdateEvent(event *model.Event) (*model.Event, *model.AppError)
 	UpdateGroup(group *model.Group) (*model.Group, *model.AppError)
 	UpdateGroupSyncable(groupSyncable *model.GroupSyncable) (*model.GroupSyncable, *model.AppError)
+	UpdateHealth(health *model.Health) (*model.Health, *model.AppError)
 	UpdateIncomingWebhook(oldHook, updatedHook *model.IncomingWebhook) (*model.IncomingWebhook, *model.AppError)
+	UpdateKid(kid *model.Kid) (*model.Kid, *model.AppError)
 	UpdateLastActivityAtIfNeeded(session model.Session)
+	UpdateMedicineRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError)
+	UpdateMenu(menu *model.Menu) (*model.Menu, *model.AppError)
 	UpdateMfa(activate bool, userId, token string) *model.AppError
 	UpdateMobileAppBadge(userId string)
 	UpdateMobileAppBadgeSync(userId string) *model.AppError
@@ -800,7 +865,9 @@ type AppIface interface {
 	UpdatePost(post *model.Post, safeUpdate bool) (*model.Post, *model.AppError)
 	UpdatePreferences(userId string, preferences model.Preferences) *model.AppError
 	UpdateRole(role *model.Role) (*model.Role, *model.AppError)
+	UpdateSchedule(schedule *model.Schedule) (*model.Schedule, *model.AppError)
 	UpdateScheme(scheme *model.Scheme) (*model.Scheme, *model.AppError)
+	UpdateSchool(school *model.School) (*model.School, *model.AppError)
 	UpdateSessionsIsGuest(userId string, isGuest bool)
 	UpdateTeam(team *model.Team) (*model.Team, *model.AppError)
 	UpdateTeamMemberRoles(teamId string, userId string, newRoles string) (*model.TeamMember, *model.AppError)

@@ -17,7 +17,7 @@ import (
 
 func (a *App) CreateSchool(school *model.School) (*model.School, *model.AppError) {
 	school.InviteId = ""
-	rschool, err := a.Srv.Store.School().Save(school)
+	rschool, err := a.Srv().Store.School().Save(school)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (a *App) UpdateSchool(school *model.School) (*model.School, *model.AppError
 }
 
 func (a *App) updateSchoolUnsanitized(school *model.School) (*model.School, *model.AppError) {
-	return a.Srv.Store.School().Update(school)
+	return a.Srv().Store.School().Update(school)
 }
 
 // RenameSchool is used to rename the school Name and the DisplayName fields
@@ -105,7 +105,7 @@ func (a *App) PatchSchool(schoolId string, patch *model.SchoolPatch) (*model.Sch
 }
 
 func (a *App) GetSchool(schoolId string) (*model.School, *model.AppError) {
-	return a.Srv.Store.School().Get(schoolId)
+	return a.Srv().Store.School().Get(schoolId)
 }
 
 func (a *App) SanitizeSchool(session model.Session, school *model.School) *model.School {
@@ -201,7 +201,7 @@ func (a *App) SetSchoolIconFromFile(school *model.School, file io.Reader) *model
 
 	curTime := model.GetMillis()
 
-	if err := a.Srv.Store.School().UpdateLastSchoolIconUpdate(school.Id, curTime); err != nil {
+	if err := a.Srv().Store.School().UpdateLastSchoolIconUpdate(school.Id, curTime); err != nil {
 		return model.NewAppError("SetSchoolIcon", "api.school.school_icon.update.app_error", nil, err.Error(), http.StatusBadRequest)
 	}
 
@@ -217,7 +217,7 @@ func (a *App) RemoveSchoolIcon(schoolId string) *model.AppError {
 		return model.NewAppError("RemoveSchoolIcon", "api.school.remove_school_icon.get_school.app_error", nil, err.Error(), http.StatusBadRequest)
 	}
 
-	if err := a.Srv.Store.School().UpdateLastSchoolIconUpdate(schoolId, 0); err != nil {
+	if err := a.Srv().Store.School().UpdateLastSchoolIconUpdate(schoolId, 0); err != nil {
 		return model.NewAppError("RemoveSchoolIcon", "api.school.school_icon.update.app_error", nil, err.Error(), http.StatusBadRequest)
 	}
 
@@ -227,7 +227,7 @@ func (a *App) RemoveSchoolIcon(schoolId string) *model.AppError {
 }
 
 func (a *App) SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError) {
-	rbranch, err := a.Srv.Store.School().SaveBranch(branch)
+	rbranch, err := a.Srv().Store.School().SaveBranch(branch)
 	if err != nil {
 		return nil, err
 	}
@@ -236,15 +236,15 @@ func (a *App) SaveBranch(branch *model.Branch) (*model.Branch, *model.AppError) 
 }
 
 func (a *App) GetBranches(schoolId string) ([]*model.Branch, *model.AppError) {
-	return a.Srv.Store.School().GetBranches(schoolId)
+	return a.Srv().Store.School().GetBranches(schoolId)
 }
 
 func (a *App) GetBranch(branchId string) (*model.Branch, *model.AppError) {
-	return a.Srv.Store.School().GetBranch(branchId)
+	return a.Srv().Store.School().GetBranch(branchId)
 }
 
 func (a *App) RemoveBranch(branchId string) *model.AppError {
-	err := a.Srv.Store.School().RemoveBranch(branchId)
+	err := a.Srv().Store.School().RemoveBranch(branchId)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (a *App) RemoveBranch(branchId string) *model.AppError {
 }
 
 func (a *App) SaveClass(class *model.Class) (*model.Class, *model.AppError) {
-	rclass, err := a.Srv.Store.School().SaveClass(class)
+	rclass, err := a.Srv().Store.School().SaveClass(class)
 	if err != nil {
 		return nil, err
 	}
@@ -261,19 +261,19 @@ func (a *App) SaveClass(class *model.Class) (*model.Class, *model.AppError) {
 }
 
 func (a *App) GetClasses(schoolId string) ([]*model.Class, *model.AppError) {
-	return a.Srv.Store.School().GetClasses(schoolId)
+	return a.Srv().Store.School().GetClasses(schoolId)
 }
 
 func (a *App) GetClass(classId string) (*model.Class, *model.AppError) {
-	return a.Srv.Store.School().GetClass(classId)
+	return a.Srv().Store.School().GetClass(classId)
 }
 
 func (a *App) GetClassesByBranch(branchId string) ([]*model.Class, *model.AppError) {
-	return a.Srv.Store.School().GetClassesByBranch(branchId)
+	return a.Srv().Store.School().GetClassesByBranch(branchId)
 }
 
 func (a *App) RemoveClass(classId string) *model.AppError {
-	err := a.Srv.Store.School().RemoveClass(classId)
+	err := a.Srv().Store.School().RemoveClass(classId)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func (a *App) RemoveClass(classId string) *model.AppError {
 }
 
 func (a *App) GetSchoolsForUser(userId string) ([]*model.School, *model.AppError) {
-	return a.Srv.Store.School().GetSchoolsByUserId(userId)
+	return a.Srv().Store.School().GetSchoolsByUserId(userId)
 }
 
 // Returns three values:
@@ -301,11 +301,11 @@ func (a *App) joinUserToSchool(school *model.School, user *model.User) (*model.S
 		sm.SchemeAdmin = true
 	}
 
-	rsm, err := a.Srv.Store.School().GetMember(school.Id, user.Id)
+	rsm, err := a.Srv().Store.School().GetMember(school.Id, user.Id)
 	if err != nil {
 		// Membership appears to be missing. Lets try to add.
 		var smr *model.SchoolMember
-		smr, err = a.Srv.Store.School().SaveMember(sm, 10) // TODO *a.Config().SchoolSettings.MaxUsersPerSchool)
+		smr, err = a.Srv().Store.School().SaveMember(sm, 10) // TODO *a.Config().SchoolSettings.MaxUsersPerSchool)
 		if err != nil {
 			return nil, false, err
 		}
@@ -318,7 +318,7 @@ func (a *App) joinUserToSchool(school *model.School, user *model.User) (*model.S
 		return rsm, true, nil
 	}
 
-	membersCount, err := a.Srv.Store.School().GetActiveMemberCount(sm.SchoolId, nil)
+	membersCount, err := a.Srv().Store.School().GetActiveMemberCount(sm.SchoolId, nil)
 	if err != nil {
 		return nil, false, err
 	}
@@ -327,7 +327,7 @@ func (a *App) joinUserToSchool(school *model.School, user *model.User) (*model.S
 		return nil, false, model.NewAppError("joinUserToSchool", "app.school.join_user_to_school.max_accounts.app_error", nil, "schoolId="+sm.SchoolId, http.StatusBadRequest)
 	}
 
-	member, err := a.Srv.Store.School().UpdateMember(sm)
+	member, err := a.Srv().Store.School().UpdateMember(sm)
 	if err != nil {
 		return nil, false, err
 	}
@@ -344,7 +344,7 @@ func (a *App) JoinUserToSchool(school *model.School, user *model.User, userReque
 		return nil
 	}
 
-	if _, err := a.Srv.Store.User().UpdateUpdateAt(user.Id); err != nil {
+	if _, err := a.Srv().Store.User().UpdateUpdateAt(user.Id); err != nil {
 		return err
 	}
 

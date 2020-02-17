@@ -23,11 +23,11 @@ func (a *App) CreateKid(kid *model.Kid) (*model.Kid, *model.AppError) {
 		return nil, err
 	}
 
-	if err = class.IsBelongToSchool(a.Session.SchoolId); err != nil {
+	if err = class.IsBelongToSchool(a.Session().SchoolId); err != nil {
 		return nil, model.NewAppError("GetKidAvatar", "api.kid.create_kid.invalid_class.app_error", nil, "", http.StatusBadRequest)
 	}
 
-	rkid, err := a.Srv.Store.Kid().Save(kid)
+	rkid, err := a.Srv().Store.Kid().Save(kid)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (a *App) UpdateKid(kid *model.Kid) (*model.Kid, *model.AppError) {
 }
 
 func (a *App) updateKidUnsanitized(kid *model.Kid) (*model.Kid, *model.AppError) {
-	return a.Srv.Store.Kid().Update(kid)
+	return a.Srv().Store.Kid().Update(kid)
 }
 
 func (a *App) PatchKid(kidId string, patch *model.KidPatch) (*model.Kid, *model.AppError) {
@@ -97,11 +97,11 @@ func (a *App) PatchKid(kidId string, patch *model.KidPatch) (*model.Kid, *model.
 }
 
 func (a *App) GetKid(kidId string) (*model.Kid, *model.AppError) {
-	return a.Srv.Store.Kid().Get(kidId)
+	return a.Srv().Store.Kid().Get(kidId)
 }
 
 func (a *App) GetKidsForUser(userId string) ([]*model.Kid, *model.AppError) {
-	return a.Srv.Store.Kid().GetKidsByUserId(userId)
+	return a.Srv().Store.Kid().GetKidsByUserId(userId)
 }
 
 func (a *App) GetKidAvatar(kid *model.Kid) ([]byte, *model.AppError) {
@@ -191,11 +191,11 @@ func (a *App) joinUserToKid(kid *model.Kid, user *model.User) (*model.KidGuardia
 		UserId: user.Id,
 	}
 
-	rsm, err := a.Srv.Store.Kid().GetGuardian(kid.Id, user.Id)
+	rsm, err := a.Srv().Store.Kid().GetGuardian(kid.Id, user.Id)
 	if err != nil {
 		// Guardianship appears to be missing. Lets try to add.
 		var smr *model.KidGuardian
-		smr, err = a.Srv.Store.Kid().SaveGuardian(sm)
+		smr, err = a.Srv().Store.Kid().SaveGuardian(sm)
 		if err != nil {
 			return nil, false, err
 		}
@@ -208,7 +208,7 @@ func (a *App) joinUserToKid(kid *model.Kid, user *model.User) (*model.KidGuardia
 		return rsm, true, nil
 	}
 
-	guardiansCount, err := a.Srv.Store.Kid().GetActiveGuardianCount(sm.KidId)
+	guardiansCount, err := a.Srv().Store.Kid().GetActiveGuardianCount(sm.KidId)
 	if err != nil {
 		return nil, false, err
 	}
@@ -217,7 +217,7 @@ func (a *App) joinUserToKid(kid *model.Kid, user *model.User) (*model.KidGuardia
 		return nil, false, model.NewAppError("joinUserToKid", "app.kid.join_user_to_kid.max_accounts.app_error", nil, "kidId="+sm.KidId, http.StatusBadRequest)
 	}
 
-	guardian, err := a.Srv.Store.Kid().UpdateGuardian(sm)
+	guardian, err := a.Srv().Store.Kid().UpdateGuardian(sm)
 	if err != nil {
 		return nil, false, err
 	}
@@ -234,7 +234,7 @@ func (a *App) JoinUserToKid(kid *model.Kid, user *model.User, userRequestorId st
 		return nil
 	}
 
-	if _, err := a.Srv.Store.User().UpdateUpdateAt(user.Id); err != nil {
+	if _, err := a.Srv().Store.User().UpdateUpdateAt(user.Id); err != nil {
 		return err
 	}
 

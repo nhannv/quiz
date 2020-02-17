@@ -48,12 +48,12 @@ func createSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_CREATE_TEAM) {
+	if !c.App.SessionHasPermissionTo(*c.App.Session(), model.PERMISSION_CREATE_TEAM) {
 		c.Err = model.NewAppError("createSchool", "api.school.is_school_creation_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
 
-	rschool, err := c.App.CreateSchoolWithUser(school, c.App.Session.UserId)
+	rschool, err := c.App.CreateSchoolWithUser(school, c.App.Session().UserId)
 	if err != nil {
 		c.Err = err
 		return
@@ -78,12 +78,12 @@ func getSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO  check school type
-	// if (!school.AllowOpenInvite || school.Type != model.TEAM_OPEN) && !c.App.SessionHasPermissionToSchool(c.App.Session, school.Id, model.PERMISSION_VIEW_TEAM) {
+	// if (!school.AllowOpenInvite || school.Type != model.TEAM_OPEN) && !c.App.SessionHasPermissionToSchool(*c.App.Session(), school.Id, model.PERMISSION_VIEW_TEAM) {
 	// 	c.SetPermissionError(model.PERMISSION_VIEW_TEAM)
 	// 	return
 	// }
 
-	c.App.SanitizeSchool(c.App.Session, school)
+	c.App.SanitizeSchool(*c.App.Session(), school)
 	w.Write([]byte(school.ToJson()))
 }
 
@@ -106,7 +106,7 @@ func updateSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_TEAM) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_TEAM) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_TEAM)
 		return
 	}
@@ -117,7 +117,7 @@ func updateSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.App.SanitizeSchool(c.App.Session, updatedSchool)
+	c.App.SanitizeSchool(*c.App.Session(), updatedSchool)
 	w.Write([]byte(updatedSchool.ToJson()))
 }
 
@@ -134,7 +134,7 @@ func patchSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_TEAM) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_TEAM) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_TEAM)
 		return
 	}
@@ -146,7 +146,7 @@ func patchSchool(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.App.SanitizeSchool(c.App.Session, patchedSchool)
+	c.App.SanitizeSchool(*c.App.Session(), patchedSchool)
 
 	c.LogAudit("")
 	w.Write([]byte(patchedSchool.ToJson()))
@@ -158,7 +158,7 @@ func getBranches(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -178,7 +178,7 @@ func getBranch(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -202,8 +202,8 @@ func addBranch(c *Context, w http.ResponseWriter, r *http.Request) {
 	branch := model.BranchFromJson(r.Body)
 	branch.SchoolId = c.Params.SchoolId
 
-	branch.CreatorId = c.App.Session.UserId
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, branch.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	branch.CreatorId = c.App.Session().UserId
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), branch.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -225,7 +225,7 @@ func removeBranch(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -246,7 +246,7 @@ func getClasses(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_VIEW_TEAM) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_VIEW_TEAM) {
 		c.SetPermissionError(model.PERMISSION_VIEW_TEAM)
 		return
 	}
@@ -266,7 +266,7 @@ func getClass(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -290,8 +290,8 @@ func addClass(c *Context, w http.ResponseWriter, r *http.Request) {
 	class := model.ClassFromJson(r.Body)
 	class.SchoolId = c.Params.SchoolId
 
-	class.CreatorId = c.App.Session.UserId
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, class.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	class.CreatorId = c.App.Session().UserId
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), class.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}
@@ -313,7 +313,7 @@ func removeClass(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.Params.SchoolId, model.PERMISSION_MANAGE_SCHOOL) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_SCHOOL)
 		return
 	}

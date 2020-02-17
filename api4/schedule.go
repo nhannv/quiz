@@ -38,7 +38,7 @@ func createSchedule(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	schedule.ClassId = c.Params.ClassId
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.Err = model.NewAppError("createSchedule", "api.schedule.is_class_manage_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -104,7 +104,7 @@ func updateSchedule(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}
@@ -131,7 +131,7 @@ func patchSchedule(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}

@@ -40,7 +40,7 @@ func createEvent(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	event.ClassId = c.Params.ClassId
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.Err = model.NewAppError("createEvent", "api.event.is_class_manage_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -106,7 +106,7 @@ func updateEvent(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}
@@ -133,7 +133,7 @@ func patchEvent(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}
@@ -162,7 +162,7 @@ func updatePaid(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_MANAGE_CLASS) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_MANAGE_CLASS) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_CLASS)
 		return
 	}

@@ -297,7 +297,7 @@ func (a *App) createSchoolUserOrGuest(user *model.User, guest bool) (*model.User
 	a.Publish(message)
 
 	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
-		a.Srv.Go(func() {
+		a.Srv().Go(func() {
 			pluginContext := a.PluginContext()
 			pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
 				hooks.UserHasBeenCreated(pluginContext, user)
@@ -307,7 +307,7 @@ func (a *App) createSchoolUserOrGuest(user *model.User, guest bool) (*model.User
 	}
 
 	if a.IsESIndexingEnabled() {
-		a.Srv.Go(func() {
+		a.Srv().Go(func() {
 			if err := a.indexUser(user); err != nil {
 				mlog.Error("Encountered error indexing user", mlog.String("user_id", user.Id), mlog.Err(err))
 			}

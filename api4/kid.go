@@ -39,7 +39,7 @@ func createKid(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToSchool(c.App.Session, c.App.Session.SchoolId, model.PERMISSION_CREATE_KID) {
+	if !c.App.SessionHasPermissionToSchool(*c.App.Session(), c.App.Session().SchoolId, model.PERMISSION_CREATE_KID) {
 		c.Err = model.NewAppError("createKid", "api.kid.is_kid_creation_allowed.disabled.app_error", nil, "", http.StatusForbidden)
 		return
 	}
@@ -62,7 +62,7 @@ func getKid(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_KID) {
+	if !c.App.SessionHasPermissionToKid(*c.App.Session(), c.Params.KidId, model.PERMISSION_MANAGE_KID) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_KID)
 		return
 	}
@@ -77,7 +77,7 @@ func getKid(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getMyKids(c *Context, w http.ResponseWriter, r *http.Request) {
-	kids, err := c.App.GetKidsForUser(c.App.Session.UserId)
+	kids, err := c.App.GetKidsForUser(c.App.Session().UserId)
 	if err != nil {
 		c.Err = err
 		return
@@ -105,7 +105,7 @@ func updateKid(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_KID) {
+	if !c.App.SessionHasPermissionToKid(*c.App.Session(), c.Params.KidId, model.PERMISSION_MANAGE_KID) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_KID)
 		return
 	}
@@ -132,7 +132,7 @@ func patchKid(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToKid(c.App.Session, c.Params.KidId, model.PERMISSION_MANAGE_KID) {
+	if !c.App.SessionHasPermissionToKid(*c.App.Session(), c.Params.KidId, model.PERMISSION_MANAGE_KID) {
 		c.SetPermissionError(model.PERMISSION_MANAGE_KID)
 		return
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) CreateMedicineRequest(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError) {
-	rmedicine, err := a.Srv.Store.Medicine().SaveRequest(medicineRequest)
+	rmedicine, err := a.Srv().Store.Medicine().SaveRequest(medicineRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (a *App) UpdateMedicineRequest(medicineRequest *model.MedicineRequest) (*mo
 }
 
 func (a *App) updateMedicineRequestUnsanitized(medicineRequest *model.MedicineRequest) (*model.MedicineRequest, *model.AppError) {
-	return a.Srv.Store.Medicine().UpdateRequest(medicineRequest)
+	return a.Srv().Store.Medicine().UpdateRequest(medicineRequest)
 }
 
 func (a *App) PatchMedicineRequest(medicineRequestId string, patch *model.MedicineRequestPatch) (*model.MedicineRequest, *model.AppError) {
@@ -54,9 +54,9 @@ func (a *App) PatchMedicineRequest(medicineRequestId string, patch *model.Medici
 }
 
 func (a *App) GetMedicineRequest(medicineRequestId string) (*model.MedicineRequest, *model.AppError) {
-	return a.Srv.Store.Medicine().GetRequest(medicineRequestId)
+	return a.Srv().Store.Medicine().GetRequest(medicineRequestId)
 }
 
 func (a *App) GetMedicineRequestsByKid(kidId string) ([]*model.MedicineRequest, *model.AppError) {
-	return a.Srv.Store.Medicine().GetRequestsByKid(kidId)
+	return a.Srv().Store.Medicine().GetRequestsByKid(kidId)
 }

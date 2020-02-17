@@ -15,11 +15,11 @@ func (a *App) CreateEvent(event *model.Event) (*model.Event, *model.AppError) {
 		return nil, err
 	}
 
-	if err = class.IsBelongToSchool(a.Session.SchoolId); err != nil {
+	if err = class.IsBelongToSchool(a.Session().SchoolId); err != nil {
 		return nil, model.NewAppError("CreateEvent", "api.event.create_event.invalid_class.app_error", nil, "", http.StatusBadRequest)
 	}
 
-	revent, err := a.Srv.Store.Event().Save(event)
+	revent, err := a.Srv().Store.Event().Save(event)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (a *App) UpdateEvent(event *model.Event) (*model.Event, *model.AppError) {
 }
 
 func (a *App) updateEventUnsanitized(event *model.Event) (*model.Event, *model.AppError) {
-	return a.Srv.Store.Event().Update(event)
+	return a.Srv().Store.Event().Update(event)
 }
 
 func (a *App) PatchEvent(eventId string, patch *model.EventPatch) (*model.Event, *model.AppError) {
@@ -73,9 +73,9 @@ func (a *App) PatchEvent(eventId string, patch *model.EventPatch) (*model.Event,
 }
 
 func (a *App) GetEvent(eventId string) (*model.Event, *model.AppError) {
-	return a.Srv.Store.Event().Get(eventId)
+	return a.Srv().Store.Event().Get(eventId)
 }
 
 func (a *App) GetEvents(classId string) ([]*model.Event, *model.AppError) {
-	return a.Srv.Store.Event().GetByClass(classId)
+	return a.Srv().Store.Event().GetByClass(classId)
 }

@@ -15,11 +15,11 @@ func (a *App) CreateSchedule(schedule *model.Schedule) (*model.Schedule, *model.
 		return nil, err
 	}
 
-	if err = class.IsBelongToSchool(a.Session.SchoolId); err != nil {
+	if err = class.IsBelongToSchool(a.Session().SchoolId); err != nil {
 		return nil, model.NewAppError("CreateSchedule", "api.schedule.create_schedule.invalid_class.app_error", nil, "", http.StatusBadRequest)
 	}
 
-	rschedule, err := a.Srv.Store.Schedule().Save(schedule)
+	rschedule, err := a.Srv().Store.Schedule().Save(schedule)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (a *App) UpdateSchedule(schedule *model.Schedule) (*model.Schedule, *model.
 }
 
 func (a *App) updateScheduleUnsanitized(schedule *model.Schedule) (*model.Schedule, *model.AppError) {
-	return a.Srv.Store.Schedule().Update(schedule)
+	return a.Srv().Store.Schedule().Update(schedule)
 }
 
 func (a *App) PatchSchedule(scheduleId string, patch *model.SchedulePatch) (*model.Schedule, *model.AppError) {
@@ -71,9 +71,9 @@ func (a *App) PatchSchedule(scheduleId string, patch *model.SchedulePatch) (*mod
 }
 
 func (a *App) GetSchedule(scheduleId string) (*model.Schedule, *model.AppError) {
-	return a.Srv.Store.Schedule().Get(scheduleId)
+	return a.Srv().Store.Schedule().Get(scheduleId)
 }
 
 func (a *App) GetSchedules(week int, year int, classId string) ([]*model.Schedule, *model.AppError) {
-	return a.Srv.Store.Schedule().GetByWeek(week, year, classId)
+	return a.Srv().Store.Schedule().GetByWeek(week, year, classId)
 }
