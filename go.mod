@@ -14,14 +14,13 @@ require (
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph v0.0.0-20180429202543-816b6608b3c8
-	github.com/fsnotify/fsnotify v1.4.7
-	github.com/go-ini/ini v1.51.1 // indirect
-	github.com/go-ldap/ldap v3.0.3+incompatible // indirect
-	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-gorp/gorp v2.0.0+incompatible // indirect
+	github.com/go-ini/ini v1.51.1 // indirect
+	github.com/go-ldap/ldap v3.0.3+incompatible // indirect
+	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.1.1 // indirect

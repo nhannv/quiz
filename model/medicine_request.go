@@ -81,8 +81,8 @@ func (o *MedicineRequest) IsValid() *AppError {
 		return NewAppError("Medicine.IsValid", "model.medicine.is_valid.update_at.app_error", nil, "id="+o.Id, http.StatusBadRequest)
 	}
 
-	if len(o.CreateBy) == 0 {
-		return NewAppError("Medicine.IsValid", "model.medicine.is_valid.create_by.app_error", nil, "id="+o.Id, http.StatusBadRequest)
+	if len(o.KidId) == 0 {
+		return NewAppError("Medicine.IsValid", "model.medicine.is_valid.kid.app_error", nil, "id="+o.Id, http.StatusBadRequest)
 	}
 
 	if o.FromDate == 0 {
