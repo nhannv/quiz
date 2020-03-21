@@ -16,7 +16,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -27,11 +26,9 @@ import (
 	"github.com/rwcarlsen/goexif/exif"
 	_ "golang.org/x/image/bmp"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
-	"github.com/mattermost/mattermost-server/v5/services/filesstore"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/filesstore"
 )
 
 const (
@@ -136,77 +133,6 @@ func (a *App) ListDirectory(path string) ([]string, *model.AppError) {
 	return *paths, nil
 }
 
-func (a *App) getInfoForFilename(post *model.Post, teamId, channelId, userId, oldId, filename string) *model.FileInfo {
-	name, _ := url.QueryUnescape(filename)
-	pathPrefix := fmt.Sprintf("teams/%s/channels/%s/users/%s/%s/", teamId, channelId, userId, oldId)
-	path := pathPrefix + name
-
-	// Open the file and populate the fields of the FileInfo
-	data, err := a.ReadFile(path)
-	if err != nil {
-		mlog.Error(
-			"File not found when migrating post to use FileInfos",
-			mlog.String("post_id", post.Id),
-			mlog.String("filename", filename),
-			mlog.String("path", path),
-			mlog.Err(err),
-		)
-		return nil
-	}
-
-	info, err := model.GetInfoForBytes(name, data)
-	if err != nil {
-		mlog.Warn(
-			"Unable to fully decode file info when migrating post to use FileInfos",
-			mlog.String("post_id", post.Id),
-			mlog.String("filename", filename),
-			mlog.Err(err),
-		)
-	}
-
-	// Generate a new ID because with the old system, you could very rarely get multiple posts referencing the same file
-	info.Id = model.NewId()
-	info.CreatorId = post.UserId
-	info.PostId = post.Id
-	info.CreateAt = post.CreateAt
-	info.UpdateAt = post.UpdateAt
-	info.Path = path
-
-	if info.IsImage() {
-		nameWithoutExtension := name[:strings.LastIndex(name, ".")]
-		info.PreviewPath = pathPrefix + nameWithoutExtension + "_preview.jpg"
-		info.ThumbnailPath = pathPrefix + nameWithoutExtension + "_thumb.jpg"
-	}
-
-	return info
-}
-
-func (a *App) findTeamIdForFilename(post *model.Post, id, filename string) string {
-	name, _ := url.QueryUnescape(filename)
-
-	// This post is in a direct channel so we need to figure out what team the files are stored under.
-	teams, err := a.Srv().Store.Team().GetTeamsByUserId(post.UserId)
-	if err != nil {
-		mlog.Error("Unable to get teams when migrating post to use FileInfo", mlog.Err(err), mlog.String("post_id", post.Id))
-		return ""
-	}
-
-	if len(teams) == 1 {
-		// The user has only one team so the post must've been sent from it
-		return teams[0].Id
-	}
-
-	for _, team := range teams {
-		path := fmt.Sprintf("teams/%s/channels/%s/users/%s/%s/%s", team.Id, post.ChannelId, post.UserId, id, name)
-		if ok, err := a.FileExists(path); ok && err == nil {
-			// Found the team that this file was posted from
-			return team.Id
-		}
-	}
-
-	return ""
-}
-
 var fileMigrationLock sync.Mutex
 var oldFilenameMatchExp *regexp.Regexp = regexp.MustCompile(`^\/([a-z\d]{26})\/([a-z\d]{26})\/([a-z\d]{26})\/([^\/]+)$`)
 
@@ -228,126 +154,6 @@ func parseOldFilenames(filenames []string, channelId, userId string) [][]string 
 		}
 	}
 	return parsed
-}
-
-// Creates and stores FileInfos for a post created before the FileInfos table existed.
-func (a *App) MigrateFilenamesToFileInfos(post *model.Post) []*model.FileInfo {
-	if len(post.Filenames) == 0 {
-		mlog.Warn("Unable to migrate post to use FileInfos with an empty Filenames field", mlog.String("post_id", post.Id))
-		return []*model.FileInfo{}
-	}
-
-	channel, errCh := a.Srv().Store.Channel().Get(post.ChannelId, true)
-	// There's a weird bug that rarely happens where a post ends up with duplicate Filenames so remove those
-	filenames := utils.RemoveDuplicatesFromStringArray(post.Filenames)
-	if errCh != nil {
-		mlog.Error(
-			"Unable to get channel when migrating post to use FileInfos",
-			mlog.String("post_id", post.Id),
-			mlog.String("channel_id", post.ChannelId),
-			mlog.Err(errCh),
-		)
-		return []*model.FileInfo{}
-	}
-
-	// Parse and validate filenames before further processing
-	parsedFilenames := parseOldFilenames(filenames, post.ChannelId, post.UserId)
-
-	if len(parsedFilenames) == 0 {
-		mlog.Error("Unable to parse filenames")
-		return []*model.FileInfo{}
-	}
-
-	// Find the team that was used to make this post since its part of the file path that isn't saved in the Filename
-	var teamId string
-	if channel.TeamId == "" {
-		// This post was made in a cross-team DM channel, so we need to find where its files were saved
-		teamId = a.findTeamIdForFilename(post, parsedFilenames[0][2], parsedFilenames[0][3])
-	} else {
-		teamId = channel.TeamId
-	}
-
-	// Create FileInfo objects for this post
-	infos := make([]*model.FileInfo, 0, len(filenames))
-	if teamId == "" {
-		mlog.Error(
-			"Unable to find team id for files when migrating post to use FileInfos",
-			mlog.String("filenames", strings.Join(filenames, ",")),
-			mlog.String("post_id", post.Id),
-		)
-	} else {
-		for _, parsed := range parsedFilenames {
-			info := a.getInfoForFilename(post, teamId, parsed[0], parsed[1], parsed[2], parsed[3])
-			if info == nil {
-				continue
-			}
-
-			infos = append(infos, info)
-		}
-	}
-
-	// Lock to prevent only one migration thread from trying to update the post at once, preventing duplicate FileInfos from being created
-	fileMigrationLock.Lock()
-	defer fileMigrationLock.Unlock()
-
-	result, err := a.Srv().Store.Post().Get(post.Id, false)
-	if err != nil {
-		mlog.Error("Unable to get post when migrating post to use FileInfos", mlog.Err(err), mlog.String("post_id", post.Id))
-		return []*model.FileInfo{}
-	}
-
-	if newPost := result.Posts[post.Id]; len(newPost.Filenames) != len(post.Filenames) {
-		// Another thread has already created FileInfos for this post, so just return those
-		var fileInfos []*model.FileInfo
-		fileInfos, err = a.Srv().Store.FileInfo().GetForPost(post.Id, true, false, false)
-		if err != nil {
-			mlog.Error("Unable to get FileInfos for migrated post", mlog.Err(err), mlog.String("post_id", post.Id))
-			return []*model.FileInfo{}
-		}
-
-		mlog.Debug("Post already migrated to use FileInfos", mlog.String("post_id", post.Id))
-		return fileInfos
-	}
-
-	mlog.Debug("Migrating post to use FileInfos", mlog.String("post_id", post.Id))
-
-	savedInfos := make([]*model.FileInfo, 0, len(infos))
-	fileIds := make([]string, 0, len(filenames))
-	for _, info := range infos {
-		if _, err = a.Srv().Store.FileInfo().Save(info); err != nil {
-			mlog.Error(
-				"Unable to save file info when migrating post to use FileInfos",
-				mlog.String("post_id", post.Id),
-				mlog.String("file_info_id", info.Id),
-				mlog.String("file_info_path", info.Path),
-				mlog.Err(err),
-			)
-			continue
-		}
-
-		savedInfos = append(savedInfos, info)
-		fileIds = append(fileIds, info.Id)
-	}
-
-	// Copy and save the updated post
-	newPost := &model.Post{}
-	*newPost = *post
-
-	newPost.Filenames = []string{}
-	newPost.FileIds = fileIds
-
-	// Update Posts to clear Filenames and set FileIds
-	if _, err = a.Srv().Store.Post().Update(newPost, post); err != nil {
-		mlog.Error(
-			"Unable to save migrated post when migrating to use FileInfos",
-			mlog.String("new_file_ids", strings.Join(newPost.FileIds, ",")),
-			mlog.String("old_filenames", strings.Join(post.Filenames, ",")),
-			mlog.String("post_id", post.Id),
-			mlog.Err(err),
-		)
-		return []*model.FileInfo{}
-	}
-	return savedInfos
 }
 
 func (a *App) GeneratePublicLink(siteURL string, info *model.FileInfo) string {
@@ -534,9 +340,8 @@ type UploadFileTask struct {
 	imageOrientation int
 
 	// Testing: overrideable dependency functions
-	pluginsEnvironment *plugin.Environment
-	writeFile          func(io.Reader, string) (int64, *model.AppError)
-	saveToDatabase     func(*model.FileInfo) (*model.FileInfo, *model.AppError)
+	writeFile      func(io.Reader, string) (int64, *model.AppError)
+	saveToDatabase func(*model.FileInfo) (*model.FileInfo, *model.AppError)
 }
 
 func (t *UploadFileTask) init(a *App) {
@@ -569,7 +374,6 @@ func (t *UploadFileTask) init(a *App) {
 	}
 	t.teeInput = io.TeeReader(t.limitedInput, t.buf)
 
-	t.pluginsEnvironment = a.GetPluginsEnvironment()
 	t.writeFile = a.WriteFile
 	t.saveToDatabase = a.Srv().Store.FileInfo().Save
 }
@@ -610,11 +414,6 @@ func (a *App) UploadFileX(channelId, name string, input io.Reader,
 	}
 
 	aerr = t.readAll()
-	if aerr != nil {
-		return t.fileinfo, aerr
-	}
-
-	aerr = t.runPlugins()
 	if aerr != nil {
 		return t.fileinfo, aerr
 	}
@@ -663,43 +462,6 @@ func (t *UploadFileTask) readAll() *model.AppError {
 
 	t.limitedInput = nil
 	t.teeInput = nil
-	return nil
-}
-
-func (t *UploadFileTask) runPlugins() *model.AppError {
-	if t.pluginsEnvironment == nil {
-		return nil
-	}
-
-	pluginContext := &plugin.Context{}
-	var rejectionError *model.AppError
-
-	t.pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
-		buf := &bytes.Buffer{}
-		replacementInfo, rejectionReason := hooks.FileWillBeUploaded(pluginContext,
-			t.fileinfo, t.newReader(), buf)
-		if rejectionReason != "" {
-			rejectionError = t.newAppError("api.file.upload_file.rejected_by_plugin.app_error",
-				rejectionReason, http.StatusForbidden, "Reason", rejectionReason)
-			return false
-		}
-		if replacementInfo != nil {
-			t.fileinfo = replacementInfo
-		}
-		if buf.Len() != 0 {
-			t.buf = buf
-			t.teeInput = nil
-			t.limitedInput = nil
-			t.fileinfo.Size = int64(buf.Len())
-		}
-
-		return true
-	}, plugin.FileWillBeUploadedId)
-
-	if rejectionError != nil {
-		return rejectionError
-	}
-
 	return nil
 }
 
@@ -919,31 +681,6 @@ func (a *App) DoUploadFileExpectModification(now time.Time, rawTeamId string, ra
 		nameWithoutExtension := filename[:strings.LastIndex(filename, ".")]
 		info.PreviewPath = pathPrefix + nameWithoutExtension + "_preview.jpg"
 		info.ThumbnailPath = pathPrefix + nameWithoutExtension + "_thumb.jpg"
-	}
-
-	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
-		var rejectionError *model.AppError
-		pluginContext := a.PluginContext()
-		pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
-			var newBytes bytes.Buffer
-			replacementInfo, rejectionReason := hooks.FileWillBeUploaded(pluginContext, info, bytes.NewReader(data), &newBytes)
-			if rejectionReason != "" {
-				rejectionError = model.NewAppError("DoUploadFile", "File rejected by plugin. "+rejectionReason, nil, "", http.StatusBadRequest)
-				return false
-			}
-			if replacementInfo != nil {
-				info = replacementInfo
-			}
-			if newBytes.Len() != 0 {
-				data = newBytes.Bytes()
-				info.Size = int64(len(data))
-			}
-
-			return true
-		}, plugin.FileWillBeUploadedId)
-		if rejectionError != nil {
-			return nil, data, rejectionError
-		}
 	}
 
 	if _, err := a.WriteFile(bytes.NewReader(data), info.Path); err != nil {

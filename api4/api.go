@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/configservice"
-	"github.com/mattermost/mattermost-server/v5/web"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/configservice"
+	"github.com/nhannv/quiz/v5/web"
 
 	_ "github.com/mattermost/go-i18n/i18n"
 )
@@ -27,47 +27,13 @@ type Routes struct {
 	Bots *mux.Router // 'api/v4/bots'
 	Bot  *mux.Router // 'api/v4/bots/{bot_user_id:[A-Za-z0-9]+}'
 
-	Teams              *mux.Router // 'api/v4/teams'
-	TeamsForUser       *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/teams'
-	Team               *mux.Router // 'api/v4/teams/{team_id:[A-Za-z0-9]+}'
-	TeamForUser        *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/teams/{team_id:[A-Za-z0-9]+}'
-	TeamByName         *mux.Router // 'api/v4/teams/name/{team_name:[A-Za-z0-9_-]+}'
-	TeamMembers        *mux.Router // 'api/v4/teams/{team_id:[A-Za-z0-9_-]+}/members'
-	TeamMember         *mux.Router // 'api/v4/teams/{team_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
-	TeamMembersForUser *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/teams/members'
-
-	Channels                 *mux.Router // 'api/v4/channels'
-	Channel                  *mux.Router // 'api/v4/channels/{channel_id:[A-Za-z0-9]+}'
-	ChannelForUser           *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/channels/{channel_id:[A-Za-z0-9]+}'
-	ChannelByName            *mux.Router // 'api/v4/teams/{team_id:[A-Za-z0-9]+}/channels/name/{channel_name:[A-Za-z0-9_-]+}'
-	ChannelByNameForTeamName *mux.Router // 'api/v4/teams/name/{team_name:[A-Za-z0-9_-]+}/channels/name/{channel_name:[A-Za-z0-9_-]+}'
-	ChannelsForTeam          *mux.Router // 'api/v4/teams/{team_id:[A-Za-z0-9]+}/channels'
-	ChannelMembers           *mux.Router // 'api/v4/channels/{channel_id:[A-Za-z0-9]+}/members'
-	ChannelMember            *mux.Router // 'api/v4/channels/{channel_id:[A-Za-z0-9]+}/members/{user_id:[A-Za-z0-9]+}'
-	ChannelMembersForUser    *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/teams/{team_id:[A-Za-z0-9]+}/channels/members'
-
-	Posts           *mux.Router // 'api/v4/posts'
-	Post            *mux.Router // 'api/v4/posts/{post_id:[A-Za-z0-9]+}'
-	PostsForChannel *mux.Router // 'api/v4/channels/{channel_id:[A-Za-z0-9]+}/posts'
-	PostsForUser    *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/posts'
-	PostForUser     *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/posts/{post_id:[A-Za-z0-9]+}'
-
 	Files *mux.Router // 'api/v4/files'
 	File  *mux.Router // 'api/v4/files/{file_id:[A-Za-z0-9]+}'
-
-	Plugins *mux.Router // 'api/v4/plugins'
-	Plugin  *mux.Router // 'api/v4/plugins/{plugin_id:[A-Za-z0-9_-]+}'
 
 	PublicFile *mux.Router // 'files/{file_id:[A-Za-z0-9]+}/public'
 
 	Commands *mux.Router // 'api/v4/commands'
 	Command  *mux.Router // 'api/v4/commands/{command_id:[A-Za-z0-9]+}'
-
-	Hooks         *mux.Router // 'api/v4/hooks'
-	IncomingHooks *mux.Router // 'api/v4/hooks/incoming'
-	IncomingHook  *mux.Router // 'api/v4/hooks/incoming/{hook_id:[A-Za-z0-9]+}'
-	OutgoingHooks *mux.Router // 'api/v4/hooks/outgoing'
-	OutgoingHook  *mux.Router // 'api/v4/hooks/outgoing/{hook_id:[A-Za-z0-9]+}'
 
 	OAuth     *mux.Router // 'api/v4/oauth'
 	OAuthApps *mux.Router // 'api/v4/oauth/apps'
@@ -110,35 +76,6 @@ type Routes struct {
 
 	ReactionByNameForPostForUser *mux.Router // 'api/v4/users/{user_id:[A-Za-z0-9]+}/posts/{post_id:[A-Za-z0-9]+}/reactions/{emoji_name:[A-Za-z0-9_-+]+}'
 
-	TermsOfService *mux.Router // 'api/v4/terms_of_service
-	Groups         *mux.Router // 'api/v4/groups'
-
-	Schools         *mux.Router // 'api/v4/schools'
-	School          *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9]+}'
-	SchoolMembers   *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members'
-	SchoolMember    *mux.Router // 'api/v4/schools/{school_id:[A-Za-z0-9_-]+}/members/{user_id:[A-Za-z0-9_-]+}'
-	SchoolsForUser  *mux.Router // 'api/v4/users/schools'
-	SchoolForUser   *mux.Router // 'api/v4/users/schools/{school_id:[A-Za-z0-9]+}'
-	Branches        *mux.Router // 'api/v4/branches'
-	Branch          *mux.Router // 'api/v4/branches/{branch_id:[A-Za-z0-9]+}'
-	BranchesForUser *mux.Router // 'api/v4/users/schools/branches'
-	Classes         *mux.Router // 'api/v4/classes'
-	Class           *mux.Router // 'api/v4/classes/{class_id:[A-Za-z0-9]+}'
-	Kids            *mux.Router // 'api/v4/kids'
-	Kid             *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}'
-	KidGuardians    *mux.Router // 'api/v4/kids/guardians'
-	KidGuardian     *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}/guardians/{user_id:[A-Za-z0-9_-]+}'
-	Schedules       *mux.Router // 'api/v4/schedules'
-	Schedule        *mux.Router // 'api/v4/schedules/{schedule_id:[A-Za-z0-9]+}'
-	Menus           *mux.Router // 'api/v4/menus'
-	Menu            *mux.Router // 'api/v4/menus/{menu_id:[A-Za-z0-9]+}'
-	Events          *mux.Router // 'api/v4/events'
-	Event           *mux.Router // 'api/v4/events/{event_id:[A-Za-z0-9]+}'
-	ClassMedicines  *mux.Router // 'api/v4/classes/{class_id:[A-Za-z0-9]+}/medicines'
-	KidMedicines    *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}/medicines'
-	Medicine        *mux.Router // 'api/v4/medicines/{request_id:[A-Za-z0-9]+}'
-	Healths         *mux.Router // 'api/v4/kids/{kid_id:[A-Za-z0-9]+}/healths'
-	Health          *mux.Router // 'api/v4/healths/{health_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -162,49 +99,12 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.UserByUsername = api.BaseRoutes.Users.PathPrefix("/username/{username:[A-Za-z0-9\\_\\-\\.]+}").Subrouter()
 	api.BaseRoutes.UserByEmail = api.BaseRoutes.Users.PathPrefix("/email/{email}").Subrouter()
 
-	api.BaseRoutes.Bots = api.BaseRoutes.ApiRoot.PathPrefix("/bots").Subrouter()
-	api.BaseRoutes.Bot = api.BaseRoutes.ApiRoot.PathPrefix("/bots/{bot_user_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Teams = api.BaseRoutes.ApiRoot.PathPrefix("/teams").Subrouter()
-	api.BaseRoutes.TeamsForUser = api.BaseRoutes.User.PathPrefix("/teams").Subrouter()
-	api.BaseRoutes.Team = api.BaseRoutes.Teams.PathPrefix("/{team_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.TeamForUser = api.BaseRoutes.TeamsForUser.PathPrefix("/{team_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.TeamByName = api.BaseRoutes.Teams.PathPrefix("/name/{team_name:[A-Za-z0-9_-]+}").Subrouter()
-	api.BaseRoutes.TeamMembers = api.BaseRoutes.Team.PathPrefix("/members").Subrouter()
-	api.BaseRoutes.TeamMember = api.BaseRoutes.TeamMembers.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.TeamMembersForUser = api.BaseRoutes.User.PathPrefix("/teams/members").Subrouter()
-
-	api.BaseRoutes.Channels = api.BaseRoutes.ApiRoot.PathPrefix("/channels").Subrouter()
-	api.BaseRoutes.Channel = api.BaseRoutes.Channels.PathPrefix("/{channel_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.ChannelForUser = api.BaseRoutes.User.PathPrefix("/channels/{channel_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.ChannelByName = api.BaseRoutes.Team.PathPrefix("/channels/name/{channel_name:[A-Za-z0-9_-]+}").Subrouter()
-	api.BaseRoutes.ChannelByNameForTeamName = api.BaseRoutes.TeamByName.PathPrefix("/channels/name/{channel_name:[A-Za-z0-9_-]+}").Subrouter()
-	api.BaseRoutes.ChannelsForTeam = api.BaseRoutes.Team.PathPrefix("/channels").Subrouter()
-	api.BaseRoutes.ChannelMembers = api.BaseRoutes.Channel.PathPrefix("/members").Subrouter()
-	api.BaseRoutes.ChannelMember = api.BaseRoutes.ChannelMembers.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.ChannelMembersForUser = api.BaseRoutes.User.PathPrefix("/teams/{team_id:[A-Za-z0-9]+}/channels/members").Subrouter()
-
-	api.BaseRoutes.Posts = api.BaseRoutes.ApiRoot.PathPrefix("/posts").Subrouter()
-	api.BaseRoutes.Post = api.BaseRoutes.Posts.PathPrefix("/{post_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.PostsForChannel = api.BaseRoutes.Channel.PathPrefix("/posts").Subrouter()
-	api.BaseRoutes.PostsForUser = api.BaseRoutes.User.PathPrefix("/posts").Subrouter()
-	api.BaseRoutes.PostForUser = api.BaseRoutes.PostsForUser.PathPrefix("/{post_id:[A-Za-z0-9]+}").Subrouter()
-
 	api.BaseRoutes.Files = api.BaseRoutes.ApiRoot.PathPrefix("/files").Subrouter()
 	api.BaseRoutes.File = api.BaseRoutes.Files.PathPrefix("/{file_id:[A-Za-z0-9]+}").Subrouter()
 	api.BaseRoutes.PublicFile = api.BaseRoutes.Root.PathPrefix("/files/{file_id:[A-Za-z0-9]+}/public").Subrouter()
 
-	api.BaseRoutes.Plugins = api.BaseRoutes.ApiRoot.PathPrefix("/plugins").Subrouter()
-	api.BaseRoutes.Plugin = api.BaseRoutes.Plugins.PathPrefix("/{plugin_id:[A-Za-z0-9\\_\\-\\.]+}").Subrouter()
-
 	api.BaseRoutes.Commands = api.BaseRoutes.ApiRoot.PathPrefix("/commands").Subrouter()
 	api.BaseRoutes.Command = api.BaseRoutes.Commands.PathPrefix("/{command_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Hooks = api.BaseRoutes.ApiRoot.PathPrefix("/hooks").Subrouter()
-	api.BaseRoutes.IncomingHooks = api.BaseRoutes.Hooks.PathPrefix("/incoming").Subrouter()
-	api.BaseRoutes.IncomingHook = api.BaseRoutes.IncomingHooks.PathPrefix("/{hook_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.OutgoingHooks = api.BaseRoutes.Hooks.PathPrefix("/outgoing").Subrouter()
-	api.BaseRoutes.OutgoingHook = api.BaseRoutes.OutgoingHooks.PathPrefix("/{hook_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.SAML = api.BaseRoutes.ApiRoot.PathPrefix("/saml").Subrouter()
 
@@ -229,8 +129,6 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 	api.BaseRoutes.Emoji = api.BaseRoutes.ApiRoot.PathPrefix("/emoji/{emoji_id:[A-Za-z0-9]+}").Subrouter()
 	api.BaseRoutes.EmojiByName = api.BaseRoutes.Emojis.PathPrefix("/name/{emoji_name:[A-Za-z0-9\\_\\-\\+]+}").Subrouter()
 
-	api.BaseRoutes.ReactionByNameForPostForUser = api.BaseRoutes.PostForUser.PathPrefix("/reactions/{emoji_name:[A-Za-z0-9\\_\\-\\+]+}").Subrouter()
-
 	api.BaseRoutes.OpenGraph = api.BaseRoutes.ApiRoot.PathPrefix("/opengraph").Subrouter()
 
 	api.BaseRoutes.Roles = api.BaseRoutes.ApiRoot.PathPrefix("/roles").Subrouter()
@@ -238,84 +136,24 @@ func Init(configservice configservice.ConfigService, globalOptionsFunc app.AppOp
 
 	api.BaseRoutes.Image = api.BaseRoutes.ApiRoot.PathPrefix("/image").Subrouter()
 
-	api.BaseRoutes.TermsOfService = api.BaseRoutes.ApiRoot.PathPrefix("/terms_of_service").Subrouter()
-	api.BaseRoutes.Groups = api.BaseRoutes.ApiRoot.PathPrefix("/groups").Subrouter()
-
-	api.BaseRoutes.Schools = api.BaseRoutes.ApiRoot.PathPrefix("/schools").Subrouter()
-	api.BaseRoutes.School = api.BaseRoutes.Schools.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.SchoolMembers = api.BaseRoutes.School.PathPrefix("/members").Subrouter()
-	api.BaseRoutes.SchoolMember = api.BaseRoutes.SchoolMembers.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.SchoolsForUser = api.BaseRoutes.User.PathPrefix("/schools").Subrouter()
-	api.BaseRoutes.SchoolForUser = api.BaseRoutes.SchoolsForUser.PathPrefix("/{school_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Branches = api.BaseRoutes.ApiRoot.PathPrefix("/branches").Subrouter()
-	api.BaseRoutes.Branch = api.BaseRoutes.Branches.PathPrefix("/{branch_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Classes = api.BaseRoutes.ApiRoot.PathPrefix("/classes").Subrouter()
-	api.BaseRoutes.Class = api.BaseRoutes.Classes.PathPrefix("/{class_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Kids = api.BaseRoutes.ApiRoot.PathPrefix("/kids").Subrouter()
-	api.BaseRoutes.Kid = api.BaseRoutes.ApiRoot.PathPrefix("/kids/{kid_id:[A-Za-z0-9]+}").Subrouter()
-	api.BaseRoutes.KidGuardians = api.BaseRoutes.Kid.PathPrefix("/parents").Subrouter()
-	api.BaseRoutes.KidGuardian = api.BaseRoutes.KidGuardians.PathPrefix("/{user_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Schedules = api.BaseRoutes.Class.PathPrefix("/schedules").Subrouter()
-	api.BaseRoutes.Schedule = api.BaseRoutes.Schedules.PathPrefix("/{schedule_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Menus = api.BaseRoutes.Class.PathPrefix("/menus").Subrouter()
-	api.BaseRoutes.Menu = api.BaseRoutes.ApiRoot.PathPrefix("/menus/{menu_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Events = api.BaseRoutes.Class.PathPrefix("/events").Subrouter()
-	api.BaseRoutes.Event = api.BaseRoutes.ApiRoot.PathPrefix("/events/{event_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.ClassMedicines = api.BaseRoutes.Class.PathPrefix("/medicines").Subrouter()
-	api.BaseRoutes.KidMedicines = api.BaseRoutes.Kid.PathPrefix("/medicines").Subrouter()
-	api.BaseRoutes.Medicine = api.BaseRoutes.KidMedicines.PathPrefix("/{request_id:[A-Za-z0-9]+}").Subrouter()
-
-	api.BaseRoutes.Healths = api.BaseRoutes.Kid.PathPrefix("/healths").Subrouter()
-	api.BaseRoutes.Health = api.BaseRoutes.Healths.PathPrefix("/{health_id:[A-Za-z0-9]+}").Subrouter()
-
 	api.InitUser()
-	api.InitBot()
-	api.InitTeam()
-	api.InitChannel()
-	api.InitPost()
-	api.InitFile()
 	api.InitSystem()
 	api.InitLicense()
 	api.InitConfig()
-	api.InitWebhook()
 	api.InitPreference()
 	api.InitSaml()
-	api.InitCompliance()
 	api.InitCluster()
 	api.InitLdap()
 	api.InitElasticsearch()
 	api.InitDataRetention()
-	api.InitBrand()
 	api.InitJob()
-	api.InitCommand()
 	api.InitStatus()
 	api.InitWebSocket()
-	api.InitEmoji()
 	api.InitOAuth()
-	api.InitReaction()
 	api.InitOpenGraph()
-	api.InitPlugin()
 	api.InitRole()
 	api.InitScheme()
 	api.InitImage()
-	api.InitTermsOfService()
-	api.InitGroup()
-	api.InitAction()
-	api.InitSchool()
-	api.InitKid()
-	api.InitSchedule()
-	api.InitMenu()
-	api.InitEvent()
-	api.InitMedicine()
-	api.InitHealth()
 
 	root.Handle("/api/v4/{anything:.*}", http.HandlerFunc(api.Handle404))
 

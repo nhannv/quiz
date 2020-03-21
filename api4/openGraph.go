@@ -6,8 +6,8 @@ package api4
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/cache/lru"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/cache/lru"
 )
 
 const OPEN_GRAPH_METADATA_CACHE_SIZE = 10000

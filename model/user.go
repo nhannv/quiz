@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -17,7 +16,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/mattermost/mattermost-server/v5/services/timezones"
+	"github.com/nhannv/quiz/v5/services/timezones"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/text/language"
 )
@@ -91,18 +90,15 @@ type User struct {
 	BotLastIconUpdate      int64     `db:"-" json:"bot_last_icon_update,omitempty"`
 	TermsOfServiceId       string    `db:"-" json:"terms_of_service_id,omitempty"`
 	TermsOfServiceCreateAt int64     `db:"-" json:"terms_of_service_create_at,omitempty"`
-	Schools                []*School `db:"-" json:"schools,omitempty"`
 }
 
 type UserRegister struct {
-	Email      string `json:"email"`
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	SchoolName string `json:"school_name,omitempty"`
-	Phone      string `json:"phone,omitempty"`
-	IsSchool   bool   `json:"is_school"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone,omitempty"`
 }
 
 type UserUpdate struct {
@@ -132,32 +128,25 @@ type UserAuth struct {
 }
 
 type UserForIndexing struct {
-	Id          string   `json:"id"`
-	Username    string   `json:"username"`
-	Nickname    string   `json:"nickname"`
-	FirstName   string   `json:"first_name"`
-	LastName    string   `json:"last_name"`
-	CreateAt    int64    `json:"create_at"`
-	DeleteAt    int64    `json:"delete_at"`
-	TeamsIds    []string `json:"team_id"`
-	ChannelsIds []string `json:"channel_id"`
+	Id        string `json:"id"`
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	CreateAt  int64  `json:"create_at"`
+	DeleteAt  int64  `json:"delete_at"`
 }
 
 type ViewUsersRestrictions struct {
-	Schools  []string
-	Teams    []string
-	Channels []string
 }
 
 func (r *ViewUsersRestrictions) Hash() string {
 	if r == nil {
 		return ""
 	}
-	ids := append(r.Schools, r.Teams...)
-	ids = append(ids, r.Channels...)
-	sort.Strings(ids)
+	// sort.Strings(ids)
 	hash := sha256.New()
-	hash.Write([]byte(strings.Join(ids, "")))
+	// hash.Write([]byte(strings.Join(ids, "")))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
@@ -653,18 +642,6 @@ func (u *User) IsGuest() bool {
 	return IsInRole(u.Roles, SYSTEM_GUEST_ROLE_ID)
 }
 
-func (u *User) IsSchoolAdmin() bool {
-	return IsInRole(u.Roles, SCHOOL_ADMIN_ROLE_ID)
-}
-
-func (u *User) IsTeacher() bool {
-	return IsInRole(u.Roles, SCHOOL_TEACHER_ROLE_ID)
-}
-
-func (u *User) IsParent() bool {
-	return IsInRole(u.Roles, SCHOOL_PARENT_ROLE_ID)
-}
-
 func (u *User) IsSystemAdmin() bool {
 	return IsInRole(u.Roles, SYSTEM_ADMIN_ROLE_ID)
 }
@@ -691,10 +668,6 @@ func IsInRole(userRoles string, inRole string) bool {
 
 func (u *User) IsSSOUser() bool {
 	return u.AuthService != "" && u.AuthService != USER_AUTH_SERVICE_EMAIL
-}
-
-func (u *User) IsOAuthUser() bool {
-	return u.AuthService == USER_AUTH_SERVICE_GITLAB
 }
 
 func (u *User) IsLDAPUser() bool {
@@ -832,12 +805,6 @@ func CleanUsername(s string) string {
 	return s
 }
 
-func IsValidUserNotifyLevel(notifyLevel string) bool {
-	return notifyLevel == CHANNEL_NOTIFY_ALL ||
-		notifyLevel == CHANNEL_NOTIFY_MENTION ||
-		notifyLevel == CHANNEL_NOTIFY_NONE
-}
-
 func IsValidPushStatusNotifyLevel(notifyLevel string) bool {
 	return notifyLevel == STATUS_ONLINE ||
 		notifyLevel == STATUS_AWAY ||
@@ -866,38 +833,6 @@ func IsValidLocale(locale string) bool {
 	}
 
 	return true
-}
-
-type UserWithGroups struct {
-	User
-	GroupIDs    *string  `json:"-"`
-	Groups      []*Group `json:"groups"`
-	SchemeGuest bool     `json:"scheme_guest"`
-	SchemeUser  bool     `json:"scheme_user"`
-	SchemeAdmin bool     `json:"scheme_admin"`
-}
-
-func (u *UserWithGroups) GetGroupIDs() []string {
-	if u.GroupIDs == nil {
-		return nil
-	}
-	trimmed := strings.TrimSpace(*u.GroupIDs)
-	if len(trimmed) == 0 {
-		return nil
-	}
-	return strings.Split(trimmed, ",")
-}
-
-type UsersWithGroupsAndCount struct {
-	Users []*UserWithGroups `json:"users"`
-	Count int64             `json:"total_count"`
-}
-
-func UsersWithGroupsAndCountFromJson(data io.Reader) *UsersWithGroupsAndCount {
-	uwg := &UsersWithGroupsAndCount{}
-	bodyBytes, _ := ioutil.ReadAll(data)
-	json.Unmarshal(bodyBytes, uwg)
-	return uwg
 }
 
 var passwordRandomSource = rand.NewSource(time.Now().Unix())

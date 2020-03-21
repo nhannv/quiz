@@ -1,4 +1,4 @@
-module github.com/mattermost/mattermost-server/v5
+module github.com/nhannv/quiz/v5.11.1+incompatible
 
 go 1.12
 
@@ -15,7 +15,6 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph v0.0.0-20180429202543-816b6608b3c8
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-gorp/gorp v2.0.0+incompatible // indirect
 	github.com/go-ini/ini v1.51.1 // indirect
@@ -53,13 +52,13 @@ require (
 	github.com/mattermost/gorp v2.0.1-0.20190301154413-3b31e9a39d05+incompatible
 	github.com/mattermost/gosaml2 v0.3.2
 	github.com/mattermost/ldap v0.0.0-20191128190019-9f62ba4b8d4d
-	github.com/mattermost/mattermost-server v5.11.1+incompatible // indirect
 	github.com/mattermost/rsc v0.0.0-20160330161541-bbaefb05eaa0
 	github.com/mattermost/viper v1.0.4
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/miekg/dns v1.1.27 // indirect
+	github.com/minio/minio-go v6.0.14+incompatible // indirect
 	github.com/minio/minio-go/v6 v6.0.45
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/muesli/smartcrop v0.3.0 // indirect
@@ -98,17 +97,19 @@ require (
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
 	golang.org/x/image v0.0.0-20200119044424-58c23975cae1
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
-	golang.org/x/mod v0.2.0 // indirect
-	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200211205636-11eff242d136
+	golang.org/x/tools v0.0.0-20200311035431-43e3193a9bc5
+	golang.org/x/tools/gopls v0.1.8-0.20200311035431-43e3193a9bc5 // indirect
 	google.golang.org/genproto v0.0.0-20200128133413-58ce757ed39b // indirect
 	google.golang.org/grpc v1.26.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/olivere/elastic.v5 v5.0.84 // indirect
 	gopkg.in/olivere/elastic.v6 v6.2.27
 	gopkg.in/yaml.v2 v2.2.8
 	willnorris.com/go/imageproxy v0.9.0

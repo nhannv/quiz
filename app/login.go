@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"github.com/avct/uasurfer"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
-	"github.com/mattermost/mattermost-server/v5/store"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/store"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 func (a *App) CheckForClientSideCert(r *http.Request) (string, string, string) {
@@ -110,21 +109,9 @@ func (a *App) GetUserForLogin(id, loginId string) (*model.User, *model.AppError)
 	return nil, model.NewAppError("GetUserForLogin", "store.sql_user.get_for_login.app_error", nil, "", http.StatusBadRequest)
 }
 
-func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string, schoolId string) *model.AppError {
-	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
-		var rejectionReason string
-		pluginContext := a.PluginContext()
-		pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
-			rejectionReason = hooks.UserWillLogIn(pluginContext, user)
-			return rejectionReason == ""
-		}, plugin.UserWillLogInId)
+func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, deviceId string) *model.AppError {
 
-		if rejectionReason != "" {
-			return model.NewAppError("DoLogin", "Login rejected by plugin: "+rejectionReason, nil, "", http.StatusBadRequest)
-		}
-	}
-
-	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceId, SchoolId: schoolId, IsOAuth: false}
+	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceId, IsOAuth: false}
 	session.GenerateCSRF()
 
 	if len(deviceId) > 0 {
@@ -164,16 +151,6 @@ func (a *App) DoLogin(w http.ResponseWriter, r *http.Request, user *model.User, 
 	w.Header().Set(model.HEADER_TOKEN, session.Token)
 
 	a.SetSession(session)
-
-	if pluginsEnvironment := a.GetPluginsEnvironment(); pluginsEnvironment != nil {
-		a.Srv().Go(func() {
-			pluginContext := a.PluginContext()
-			pluginsEnvironment.RunMultiPluginHook(func(hooks plugin.Hooks) bool {
-				hooks.UserHasLoggedIn(pluginContext, user)
-				return true
-			}, plugin.UserHasLoggedInId)
-		})
-	}
 
 	return nil
 }

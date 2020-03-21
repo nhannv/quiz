@@ -22,7 +22,7 @@ Many of the most widely used Go projects are built using Cobra, such as:
 [Pouch](https://github.com/alibaba/pouch),
 [Istio](https://istio.io),
 [Prototool](https://github.com/uber/prototool),
-[mattermost-server](https://github.com/mattermost/mattermost-server),
+[quiz](https://github.com/nhannv/quiz),
 [Gardener](https://github.com/gardener/gardenctl),
 etc.
 

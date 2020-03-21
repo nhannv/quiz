@@ -6,7 +6,7 @@ package app
 import (
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 // RegisterAllClusterMessageHandlers registers the cluster message handlers that are handled by the App layer.
@@ -18,14 +18,9 @@ func (a *App) registerAllClusterMessageHandlers() {
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_PUBLISH, a.clusterPublishHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_UPDATE_STATUS, a.clusterUpdateStatusHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INVALIDATE_ALL_CACHES, a.clusterInvalidateAllCachesHandler)
-	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_CHANNEL_MEMBERS_NOTIFY_PROPS, a.clusterInvalidateCacheForChannelMembersNotifyPropHandler)
-	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_CHANNEL_BY_NAME, a.clusterInvalidateCacheForChannelByNameHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_USER, a.clusterInvalidateCacheForUserHandler)
-	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_USER_TEAMS, a.clusterInvalidateCacheForUserTeamsHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_CLEAR_SESSION_CACHE_FOR_USER, a.clusterClearSessionCacheForUserHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_CLEAR_SESSION_CACHE_FOR_ALL_USERS, a.clusterClearSessionCacheForAllUsersHandler)
-	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_INSTALL_PLUGIN, a.clusterInstallPluginHandler)
-	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_REMOVE_PLUGIN, a.clusterRemovePluginHandler)
 	a.Cluster().RegisterClusterMessageHandler(model.CLUSTER_EVENT_BUSY_STATE_CHANGED, a.clusterBusyStateChgHandler)
 }
 
@@ -43,20 +38,8 @@ func (a *App) clusterInvalidateAllCachesHandler(msg *model.ClusterMessage) {
 	a.InvalidateAllCachesSkipSend()
 }
 
-func (a *App) clusterInvalidateCacheForChannelMembersNotifyPropHandler(msg *model.ClusterMessage) {
-	a.InvalidateCacheForChannelMembersNotifyPropsSkipClusterSend(msg.Data)
-}
-
-func (a *App) clusterInvalidateCacheForChannelByNameHandler(msg *model.ClusterMessage) {
-	a.InvalidateCacheForChannelByNameSkipClusterSend(msg.Props["id"], msg.Props["name"])
-}
-
 func (a *App) clusterInvalidateCacheForUserHandler(msg *model.ClusterMessage) {
 	a.InvalidateCacheForUserSkipClusterSend(msg.Data)
-}
-
-func (a *App) clusterInvalidateCacheForUserTeamsHandler(msg *model.ClusterMessage) {
-	a.InvalidateCacheForUserTeamsSkipClusterSend(msg.Data)
 }
 
 func (a *App) clusterClearSessionCacheForUserHandler(msg *model.ClusterMessage) {
@@ -65,14 +48,6 @@ func (a *App) clusterClearSessionCacheForUserHandler(msg *model.ClusterMessage) 
 
 func (a *App) clusterClearSessionCacheForAllUsersHandler(msg *model.ClusterMessage) {
 	a.ClearSessionCacheForAllUsersSkipClusterSend()
-}
-
-func (a *App) clusterInstallPluginHandler(msg *model.ClusterMessage) {
-	a.InstallPluginFromData(model.PluginEventDataFromJson(strings.NewReader(msg.Data)))
-}
-
-func (a *App) clusterRemovePluginHandler(msg *model.ClusterMessage) {
-	a.RemovePluginFromData(model.PluginEventDataFromJson(strings.NewReader(msg.Data)))
 }
 
 func (a *App) clusterBusyStateChgHandler(msg *model.ClusterMessage) {

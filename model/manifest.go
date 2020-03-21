@@ -325,10 +325,6 @@ func (m *Manifest) MeetMinServerVersion(serverVersion string) (bool, error) {
 }
 
 func (m *Manifest) IsValid() error {
-	if !IsValidPluginId(m.Id) {
-		return errors.New("invalid plugin ID")
-	}
-
 	if m.HomepageURL != "" && !IsValidHttpUrl(m.HomepageURL) {
 		return errors.New("invalid HomepageURL")
 	}

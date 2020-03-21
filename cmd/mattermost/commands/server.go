@@ -9,15 +9,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mattermost/mattermost-server/v5/api4"
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/config"
-	"github.com/mattermost/mattermost-server/v5/manualtesting"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/utils"
-	"github.com/mattermost/mattermost-server/v5/web"
-	"github.com/mattermost/mattermost-server/v5/wsapi"
 	"github.com/mattermost/viper"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/config"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/utils"
+	"github.com/nhannv/quiz/v5/web"
+	"github.com/nhannv/quiz/v5/wsapi"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -72,7 +70,6 @@ func runServer(configStore config.Store, disableConfigWatch bool, usedPlatform b
 		mlog.Error("The platform binary has been deprecated, please switch to using the mattermost binary.")
 	}
 
-	api := api4.Init(server, server.AppOptions, server.Router)
 	wsapi.Init(server.FakeApp(), server.WebSocketRouter)
 	web.New(server, server.AppOptions, server.Router)
 
@@ -80,11 +77,6 @@ func runServer(configStore config.Store, disableConfigWatch bool, usedPlatform b
 	if serverErr != nil {
 		mlog.Critical(serverErr.Error())
 		return serverErr
-	}
-
-	// If we allow testing then listen for manual testing URL hits
-	if *server.Config().ServiceSettings.EnableTesting {
-		manualtesting.Init(api)
 	}
 
 	notifyReady()

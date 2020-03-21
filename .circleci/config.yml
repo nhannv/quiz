@@ -14,7 +14,7 @@ executors:
 
 jobs:
   setup:
-    working_directory: ~/mattermost/mattermost-server
+    working_directory: ~/mattermost/quiz
     docker:
       - image: mattermost/mattermost-build-webapp:oct-2-2018
     resource_class: xlarge
@@ -38,9 +38,9 @@ jobs:
           root: ~/mattermost
           paths:
             - mattermost-webapp
-            - mattermost-server
+            - quiz
 
-  # TODO: enable this step when the i18n-extract works with mattermost-server only
+  # TODO: enable this step when the i18n-extract works with quiz only
   # and not depend on both mm-server/enterprise
   # check-i18n:
   #   docker:
@@ -51,7 +51,7 @@ jobs:
   #         at: ~/mattermost/
   #     - run:
   #         command: |
-  #           cd mattermost-server
+  #           cd quiz
   #           cp i18n/en.json /tmp/en.json
   #           make i18n-extract
   #           diff /tmp/en.json i18n/en.json
@@ -69,24 +69,24 @@ jobs:
             echo "Installing golangci-lint"
             curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b /usr/local/bin v1.23.3 # Keep this in sync with .golangci.yml and Jenkinsfile.pr
             echo "Installing mattermost-govet"
-            export GOBIN=${PWD}/mattermost-server/bin
+            export GOBIN=${PWD}/quiz/bin
             GO111MODULE=off go get -u github.com/mattermost/mattermost-govet
             export PATH=$PATH:$GOBIN
-            cd mattermost-server
+            cd quiz
             make config-reset
             make check-style BUILD_NUMBER='${CIRCLE_BRANCH}-${CIRCLE_BUILD_NUM}' MM_NO_ENTERPRISE_LINT=true
             make build BUILD_NUMBER='${CIRCLE_BRANCH}-${CIRCLE_BUILD_NUM}'
             make package BUILD_NUMBER='${CIRCLE_BRANCH}-${CIRCLE_BUILD_NUM}'
       - store_artifacts:
-          path: ~/mattermost/mattermost-server/dist/mattermost-team-linux-amd64.tar.gz
+          path: ~/mattermost/quiz/dist/mattermost-team-linux-amd64.tar.gz
       - store_artifacts:
-          path: ~/mattermost/mattermost-server/dist/mattermost-team-osx-amd64.tar.gz
+          path: ~/mattermost/quiz/dist/mattermost-team-osx-amd64.tar.gz
       - store_artifacts:
-          path: ~/mattermost/mattermost-server/dist/mattermost-team-windows-amd64.zip
+          path: ~/mattermost/quiz/dist/mattermost-team-windows-amd64.zip
       - persist_to_workspace:
           root: ~/mattermost
           paths:
-            - mattermost-server
+            - quiz
             - mattermost-webapp
 
   test:
@@ -98,7 +98,7 @@ jobs:
       - run:
           name: Run Docker compose
           command: |
-            cd mattermost-server/build
+            cd quiz/build
             docker-compose --no-ansi run --rm start_dependencies
             cat ../tests/test-data.ldif | docker-compose --no-ansi exec -T openldap bash -c 'ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest';
             docker-compose --no-ansi exec -T minio sh -c 'mkdir -p /data/mattermost-test';
@@ -114,7 +114,7 @@ jobs:
           name: Run Tests
           command: |
             ulimit -n 8096
-            mkdir -p mattermost-server/client/plugins
+            mkdir -p quiz/client/plugins
             docker run -it --net circleci_mm-test \
               --env TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \
               --env TEST_DATABASE_POSTGRESQL_DSN="postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10" \
@@ -130,9 +130,9 @@ jobs:
               --env MM_EMAILSETTINGS_SMTPSERVER=inbucket \
               --env MM_EMAILSETTINGS_SMTPPORT=10025 \
               --env MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://elasticsearch:9200 \
-              --env GOBIN=/mattermost/mattermost-server/bin \
+              --env GOBIN=/mattermost/quiz/bin \
               -v ~/mattermost:/mattermost \
-              -w /mattermost/mattermost-server \
+              -w /mattermost/quiz \
               mattermost/mattermost-build-server:oct-18-2019 \
               bash -c 'ulimit -n 8096; make test-server BUILD_NUMBER="$CIRCLE_BRANCH-$CIRCLE_PREVIOUS_BUILD_NUM" TESTFLAGS= TESTFLAGSEE='
           no_output_timeout: 1h
@@ -140,7 +140,7 @@ jobs:
           name: Capture docker logs
           when: always
           command: |
-            cd mattermost-server/build
+            cd quiz/build
             # Capture docker logs
             mkdir -p logs
             docker-compose logs --tail="all" -t --no-color > logs/docker-compose_logs
@@ -148,17 +148,17 @@ jobs:
             docker stats -a --no-stream > logs/docker_stats
             tar -czvf logs/docker_logs.tar.gz logs/docker-compose_logs logs/docker_ps logs/docker_stats
       - store_artifacts:
-          path: ~/mattermost/mattermost-server/build/logs
+          path: ~/mattermost/quiz/build/logs
       - run:
           when: always
           command: |
-            cd mattermost-server
+            cd quiz
             mkdir -p test-results
             cp report.xml test-results
       - store_test_results:
-          path: ~/mattermost/mattermost-server/test-results/
+          path: ~/mattermost/quiz/test-results/
       - store_artifacts:
-          path: ~/mattermost/mattermost-server/test-results/
+          path: ~/mattermost/quiz/test-results/
 
   test-schema:
     executor:
@@ -169,7 +169,7 @@ jobs:
       - run:
           name: Run Docker compose
           command: |
-            cd mattermost-server/build
+            cd quiz/build
             docker-compose --no-ansi run --rm start_dependencies
             cat ../tests/test-data.ldif | docker-compose --no-ansi exec -T openldap bash -c 'ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest';
             docker-compose --no-ansi exec -T minio sh -c 'mkdir -p /data/mattermost-test';
@@ -185,8 +185,8 @@ jobs:
           name: Postgres schema migration validation
           command: |
             ulimit -n 8096
-            mkdir -p mattermost-server/client/plugins
-            cd mattermost-server/build
+            mkdir -p quiz/client/plugins
+            cd quiz/build
             echo "Creating databases"
             docker-compose --no-ansi exec -T postgres sh -c 'exec echo "CREATE DATABASE migrated; CREATE DATABASE latest;" | exec psql -U mmuser mattermost_test'
             echo "Importing postgres dump from version 5.0"
@@ -205,7 +205,7 @@ jobs:
               --env MM_EMAILSETTINGS_SMTPPORT=10025 \
               --env MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://elasticsearch:9200 \
               -v ~/mattermost:/mattermost \
-              -w /mattermost/mattermost-server \
+              -w /mattermost/quiz \
               mattermost/mattermost-build-server:oct-18-2019 \
               bash -c 'ulimit -n 8096; make ARGS="version" run-cli && make MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@postgres:5432/latest?sslmode=disable&connect_timeout=10" ARGS="version" run-cli'
             echo "Generating dump"
@@ -221,8 +221,8 @@ jobs:
           name: MySQL schema migration validation
           command: |
             ulimit -n 8096
-            mkdir -p mattermost-server/client/plugins
-            cd mattermost-server/build
+            mkdir -p quiz/client/plugins
+            cd quiz/build
             echo "Creating databases"
             docker-compose --no-ansi exec -T mysql mysql -uroot -pmostest -e "CREATE DATABASE migrated; CREATE DATABASE latest; GRANT ALL PRIVILEGES ON migrated.* TO mmuser; GRANT ALL PRIVILEGES ON latest.* TO mmuser"
             echo "Importing mysql dump from version 5.0"
@@ -241,7 +241,7 @@ jobs:
               --env MM_EMAILSETTINGS_SMTPPORT=10025 \
               --env MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://elasticsearch:9200 \
               -v ~/mattermost:/mattermost \
-              -w /mattermost/mattermost-server \
+              -w /mattermost/quiz \
               mattermost/mattermost-build-server:oct-18-2019 \
               bash -c 'ulimit -n 8096; make ARGS="version" run-cli && make MM_SQLSETTINGS_DATASOURCE="mmuser:mostest@tcp(mysql:3306)/latest?charset=utf8mb4,utf8&readTimeout=30s&writeTimeout=30s" ARGS="version" run-cli'
 
@@ -269,11 +269,11 @@ jobs:
           at: ~/mattermost/
       - run:
           command: |
-            cd ~/mattermost/mattermost-server/dist/
+            cd ~/mattermost/quiz/dist/
             rm -rf mattermost
       - aws-s3/copy:
-          from: ~/mattermost/mattermost-server/dist/
-          to: "s3://pr-builds.mattermost.com/mattermost-server/commit/${CIRCLE_SHA1}/"
+          from: ~/mattermost/quiz/dist/
+          to: "s3://pr-builds.mattermost.com/quiz/commit/${CIRCLE_SHA1}/"
           arguments: --acl public-read --cache-control "no-cache" --recursive
 
   upload-s3:
@@ -285,11 +285,11 @@ jobs:
           at: ~/mattermost/
       - run:
           command: |
-            cd ~/mattermost/mattermost-server/dist/
+            cd ~/mattermost/quiz/dist/
             rm -rf mattermost
       - aws-s3/copy:
-          from: ~/mattermost/mattermost-server/dist/
-          to: s3://pr-builds.mattermost.com/mattermost-server/$(echo "${CIRCLE_BRANCH}" | sed 's/pull\//PR-/g')/
+          from: ~/mattermost/quiz/dist/
+          to: s3://pr-builds.mattermost.com/quiz/$(echo "${CIRCLE_BRANCH}" | sed 's/pull\//PR-/g')/
           arguments: --acl public-read --cache-control "no-cache" --recursive
 
   build-docker:
@@ -304,8 +304,8 @@ jobs:
       - run:
           command: |
             export TAG="${CIRCLE_SHA1:0:7}"
-            cd mattermost-server
-            export MM_PACKAGE=https://pr-builds.mattermost.com/mattermost-server/commit/${CIRCLE_SHA1}/mattermost-team-linux-amd64.tar.gz
+            cd quiz
+            export MM_PACKAGE=https://pr-builds.mattermost.com/quiz/commit/${CIRCLE_SHA1}/mattermost-team-linux-amd64.tar.gz
             docker build --build-arg MM_PACKAGE=$MM_PACKAGE -t mattermost/mattermost-team-edition:${TAG} build
             echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
             docker push mattermost/mattermost-team-edition:${TAG}

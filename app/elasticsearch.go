@@ -6,7 +6,7 @@ package app
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 func (a *App) TestElasticsearch(cfg *model.Config) *model.AppError {

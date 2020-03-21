@@ -4,8 +4,8 @@
 package localcachelayer
 
 import (
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/store"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/store"
 )
 
 type LocalCacheReactionStore struct {
@@ -29,25 +29,6 @@ func (s LocalCacheReactionStore) Save(reaction *model.Reaction) (*model.Reaction
 func (s LocalCacheReactionStore) Delete(reaction *model.Reaction) (*model.Reaction, *model.AppError) {
 	defer s.rootStore.doInvalidateCacheCluster(s.rootStore.reactionCache, reaction.PostId)
 	return s.ReactionStore.Delete(reaction)
-}
-
-func (s LocalCacheReactionStore) GetForPost(postId string, allowFromCache bool) ([]*model.Reaction, *model.AppError) {
-	if !allowFromCache {
-		return s.ReactionStore.GetForPost(postId, false)
-	}
-
-	if reaction := s.rootStore.doStandardReadCache(s.rootStore.reactionCache, postId); reaction != nil {
-		return reaction.([]*model.Reaction), nil
-	}
-
-	reaction, err := s.ReactionStore.GetForPost(postId, false)
-	if err != nil {
-		return nil, err
-	}
-
-	s.rootStore.doStandardAddToCache(s.rootStore.reactionCache, postId, reaction)
-
-	return reaction, nil
 }
 
 func (s LocalCacheReactionStore) DeleteAllWithEmojiName(emojiName string) *model.AppError {

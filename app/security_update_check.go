@@ -10,10 +10,10 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/mailservice"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/mailservice"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 const (
@@ -74,10 +74,6 @@ func (s *Server) DoSecurityUpdateCheck() {
 
 		if ucr, err := s.Store.Status().GetTotalActiveUsersCount(); err == nil {
 			v.Set(PROP_SECURITY_ACTIVE_USER_COUNT, strconv.FormatInt(ucr, 10))
-		}
-
-		if teamCount, err := s.Store.Team().AnalyticsTeamCount(false); err == nil {
-			v.Set(PROP_SECURITY_TEAM_COUNT, strconv.FormatInt(teamCount, 10))
 		}
 
 		res, err := http.Get(SECURITY_URL + "/security?" + v.Encode())

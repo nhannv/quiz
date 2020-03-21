@@ -3,7 +3,7 @@
 
 package interfaces
 
-import "github.com/mattermost/mattermost-server/v5/model"
+import "github.com/nhannv/quiz/v5/model"
 
 type MigrationsJobInterface interface {
 	MakeWorker() model.Worker

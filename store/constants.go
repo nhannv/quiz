@@ -8,6 +8,10 @@ const (
 	MISSING_CHANNEL_MEMBER_ERROR = "store.sql_channel.get_member.missing.app_error"
 	CHANNEL_EXISTS_ERROR         = "store.sql_channel.save_channel.exists.app_error"
 
+	MISSING_CLASS_ERROR        = "store.sql_class.get_by_name.missing.app_error"
+	MISSING_CLASS_MEMBER_ERROR = "store.sql_class.get_member.missing.app_error"
+	CLASS_EXISTS_ERROR         = "store.sql_class.save_class.exists.app_error"
+
 	MISSING_ACCOUNT_ERROR      = "store.sql_user.missing_account.const"
 	MISSING_AUTH_ACCOUNT_ERROR = "store.sql_user.get_by_auth.missing_account.app_error"
 

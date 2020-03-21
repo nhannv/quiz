@@ -6,11 +6,8 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/mattermost/mattermost-server/v5/utils"
 )
 
 var PermissionsCmd = &cobra.Command{
@@ -26,32 +23,11 @@ var ResetPermissionsCmd = &cobra.Command{
 	RunE:    resetPermissionsCmdF,
 }
 
-var ExportPermissionsCmd = &cobra.Command{
-	Use:     "export",
-	Short:   "Export permissions data",
-	Long:    "Export Roles and Schemes to JSONL for use by Mattermost permissions import.",
-	Example: " permissions export > export.jsonl",
-	RunE:    exportPermissionsCmdF,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		os.Setenv("MM_LOGSETTINGS_CONSOLELEVEL", "error")
-	},
-}
-
-var ImportPermissionsCmd = &cobra.Command{
-	Use:     "import [file]",
-	Short:   "Import permissions data",
-	Long:    "Import Roles and Schemes JSONL data as created by the Mattermost permissions export.",
-	Example: " permissions import export.jsonl",
-	RunE:    importPermissionsCmdF,
-}
-
 func init() {
 	ResetPermissionsCmd.Flags().Bool("confirm", false, "Confirm you really want to reset the permissions system and a database backup has been performed.")
 
 	PermissionsCmd.AddCommand(
 		ResetPermissionsCmd,
-		ExportPermissionsCmd,
-		ImportPermissionsCmd,
 	)
 	RootCmd.AddCommand(PermissionsCmd)
 }
@@ -87,42 +63,4 @@ func resetPermissionsCmdF(command *cobra.Command, args []string) error {
 	CommandPrettyPrintln("For the changes to take effect immediately, go to the Mattermost System Console > General > Configuration and click \"Purge All Caches\".")
 
 	return nil
-}
-
-func exportPermissionsCmdF(command *cobra.Command, args []string) error {
-	a, err := InitDBCommandContextCobra(command)
-	if err != nil {
-		return err
-	}
-	defer a.Shutdown()
-
-	if license := a.License(); license == nil {
-		return errors.New(utils.T("cli.license.critical"))
-	}
-
-	if err = a.ExportPermissions(os.Stdout); err != nil {
-		return errors.New(err.Error())
-	}
-
-	return nil
-}
-
-func importPermissionsCmdF(command *cobra.Command, args []string) error {
-	a, err := InitDBCommandContextCobra(command)
-	if err != nil {
-		return err
-	}
-	defer a.Shutdown()
-
-	if license := a.License(); license == nil {
-		return errors.New(utils.T("cli.license.critical"))
-	}
-
-	file, err := os.Open(args[0])
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	return a.ImportPermissions(file)
 }

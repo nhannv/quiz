@@ -26,7 +26,7 @@ up()
     docker run -it -u root \
         --privileged \
         -v $GOPATH:/go \
-        -w /go/src/github.com/mattermost/mattermost-server/ \
+        -w /go/src/github.com/nhannv/quiz/ \
         --net ${COMPOSE_PROJECT_NAME}_mm-test \
         -e GOPATH="/go" \
         -e TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \

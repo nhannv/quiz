@@ -9,10 +9,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 type Context struct {
@@ -237,116 +237,6 @@ func (c *Context) RequireUserId() *Context {
 	return c
 }
 
-func (c *Context) RequireSchoolId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.SchoolId) != 26 {
-		c.SetInvalidUrlParam("school_id")
-	}
-	return c
-}
-
-func (c *Context) RequireBranchId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.BranchId) != 26 {
-		c.SetInvalidUrlParam("branch_id")
-	}
-	return c
-}
-
-func (c *Context) RequireClassId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.ClassId) != 26 {
-		c.SetInvalidUrlParam("user_id")
-	}
-	return c
-}
-
-func (c *Context) RequireKidId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.KidId) != 26 {
-		c.SetInvalidUrlParam("kid_id")
-	}
-	return c
-}
-
-func (c *Context) RequireScheduleId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.ScheduleId) != 26 {
-		c.SetInvalidUrlParam("schedule_id")
-	}
-	return c
-}
-
-func (c *Context) RequireMenuId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.MenuId) != 26 {
-		c.SetInvalidUrlParam("menu_id")
-	}
-	return c
-}
-
-func (c *Context) RequireEventId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.EventId) != 26 {
-		c.SetInvalidUrlParam("event_id")
-	}
-	return c
-}
-
-func (c *Context) RequireHealthId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.HealthId) != 26 {
-		c.SetInvalidUrlParam("health_id")
-	}
-	return c
-}
-
-func (c *Context) RequireTeamId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.TeamId) != 26 {
-		c.SetInvalidUrlParam("team_id")
-	}
-	return c
-}
-
-func (c *Context) RequireInviteId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.InviteId) == 0 {
-		c.SetInvalidUrlParam("invite_id")
-	}
-	return c
-}
-
 func (c *Context) RequireTokenId() *Context {
 	if c.Err != nil {
 		return c
@@ -354,17 +244,6 @@ func (c *Context) RequireTokenId() *Context {
 
 	if len(c.Params.TokenId) != 26 {
 		c.SetInvalidUrlParam("token_id")
-	}
-	return c
-}
-
-func (c *Context) RequireChannelId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.ChannelId) != 26 {
-		c.SetInvalidUrlParam("channel_id")
 	}
 	return c
 }
@@ -378,17 +257,6 @@ func (c *Context) RequireUsername() *Context {
 		c.SetInvalidParam("username")
 	}
 
-	return c
-}
-
-func (c *Context) RequirePostId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.PostId) != 26 {
-		c.SetInvalidUrlParam("post_id")
-	}
 	return c
 }
 
@@ -427,29 +295,6 @@ func (c *Context) RequireFilename() *Context {
 	return c
 }
 
-func (c *Context) RequirePluginId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.PluginId) == 0 {
-		c.SetInvalidUrlParam("plugin_id")
-	}
-
-	return c
-}
-
-func (c *Context) RequireReportId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.ReportId) != 26 {
-		c.SetInvalidUrlParam("report_id")
-	}
-	return c
-}
-
 func (c *Context) RequireEmojiId() *Context {
 	if c.Err != nil {
 		return c
@@ -458,30 +303,6 @@ func (c *Context) RequireEmojiId() *Context {
 	if len(c.Params.EmojiId) != 26 {
 		c.SetInvalidUrlParam("emoji_id")
 	}
-	return c
-}
-
-func (c *Context) RequireTeamName() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if !model.IsValidTeamName(c.Params.TeamName) {
-		c.SetInvalidUrlParam("team_name")
-	}
-
-	return c
-}
-
-func (c *Context) RequireChannelName() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if !model.IsValidChannelIdentifier(c.Params.ChannelName) {
-		c.SetInvalidUrlParam("channel_name")
-	}
-
 	return c
 }
 
@@ -547,29 +368,6 @@ func (c *Context) RequireEmojiName() *Context {
 	return c
 }
 
-func (c *Context) RequireHookId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.HookId) != 26 {
-		c.SetInvalidUrlParam("hook_id")
-	}
-
-	return c
-}
-
-func (c *Context) RequireCommandId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.CommandId) != 26 {
-		c.SetInvalidUrlParam("command_id")
-	}
-	return c
-}
-
 func (c *Context) RequireJobId() *Context {
 	if c.Err != nil {
 		return c
@@ -626,17 +424,6 @@ func (c *Context) RequireRoleName() *Context {
 	return c
 }
 
-func (c *Context) RequireGroupId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.GroupId) != 26 {
-		c.SetInvalidUrlParam("group_id")
-	}
-	return c
-}
-
 func (c *Context) RequireRemoteId() *Context {
 	if c.Err != nil {
 		return c
@@ -644,28 +431,6 @@ func (c *Context) RequireRemoteId() *Context {
 
 	if len(c.Params.RemoteId) == 0 {
 		c.SetInvalidUrlParam("remote_id")
-	}
-	return c
-}
-
-func (c *Context) RequireSyncableId() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if len(c.Params.SyncableId) != 26 {
-		c.SetInvalidUrlParam("syncable_id")
-	}
-	return c
-}
-
-func (c *Context) RequireSyncableType() *Context {
-	if c.Err != nil {
-		return c
-	}
-
-	if c.Params.SyncableType != model.GroupSyncableTypeTeam && c.Params.SyncableType != model.GroupSyncableTypeChannel {
-		c.SetInvalidUrlParam("syncable_type")
 	}
 	return c
 }

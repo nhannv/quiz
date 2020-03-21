@@ -10,14 +10,14 @@ import (
 	"strconv"
 
 	goi18n "github.com/mattermost/go-i18n/i18n"
-	"github.com/mattermost/mattermost-server/v5/einterfaces"
-	"github.com/mattermost/mattermost-server/v5/jobs"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/httpservice"
-	"github.com/mattermost/mattermost-server/v5/services/imageproxy"
-	"github.com/mattermost/mattermost-server/v5/services/timezones"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/einterfaces"
+	"github.com/nhannv/quiz/v5/jobs"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/httpservice"
+	"github.com/nhannv/quiz/v5/services/imageproxy"
+	"github.com/nhannv/quiz/v5/services/timezones"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 type App struct {

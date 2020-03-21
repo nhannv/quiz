@@ -6,7 +6,7 @@ package api4
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 func (api *API) InitStatus() {
@@ -77,11 +77,6 @@ func updateUserStatus(c *Context, w http.ResponseWriter, r *http.Request) {
 	if !c.App.SessionHasPermissionToUser(*c.App.Session(), c.Params.UserId) {
 		c.SetPermissionError(model.PERMISSION_EDIT_OTHER_USERS)
 		return
-	}
-
-	currentStatus, err := c.App.GetStatus(c.Params.UserId)
-	if err == nil && currentStatus.Status == model.STATUS_OUT_OF_OFFICE && status.Status != model.STATUS_OUT_OF_OFFICE {
-		c.App.DisableAutoResponder(c.Params.UserId, c.IsSystemAdmin())
 	}
 
 	switch status.Status {

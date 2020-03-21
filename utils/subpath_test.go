@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 func TestUpdateAssetsSubpathFromConfig(t *testing.T) {

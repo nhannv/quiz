@@ -6,7 +6,7 @@ package api4
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 func (api *API) InitScheme() {
@@ -15,8 +15,6 @@ func (api *API) InitScheme() {
 	api.BaseRoutes.Schemes.Handle("/{scheme_id:[A-Za-z0-9]+}", api.ApiSessionRequired(deleteScheme)).Methods("DELETE")
 	api.BaseRoutes.Schemes.Handle("/{scheme_id:[A-Za-z0-9]+}", api.ApiSessionRequiredTrustRequester(getScheme)).Methods("GET")
 	api.BaseRoutes.Schemes.Handle("/{scheme_id:[A-Za-z0-9]+}/patch", api.ApiSessionRequired(patchScheme)).Methods("PUT")
-	api.BaseRoutes.Schemes.Handle("/{scheme_id:[A-Za-z0-9]+}/teams", api.ApiSessionRequiredTrustRequester(getTeamsForScheme)).Methods("GET")
-	api.BaseRoutes.Schemes.Handle("/{scheme_id:[A-Za-z0-9]+}/channels", api.ApiSessionRequiredTrustRequester(getChannelsForScheme)).Methods("GET")
 }
 
 func createScheme(c *Context, w http.ResponseWriter, r *http.Request) {
@@ -73,7 +71,7 @@ func getSchemes(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	scope := c.Params.Scope
-	if scope != "" && scope != model.SCHEME_SCOPE_TEAM && scope != model.SCHEME_SCOPE_CHANNEL {
+	if scope != "" {
 		c.SetInvalidParam("scope")
 		return
 	}
@@ -85,68 +83,6 @@ func getSchemes(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte(model.SchemesToJson(schemes)))
-}
-
-func getTeamsForScheme(c *Context, w http.ResponseWriter, r *http.Request) {
-	c.RequireSchemeId()
-	if c.Err != nil {
-		return
-	}
-
-	if !c.App.SessionHasPermissionTo(*c.App.Session(), model.PERMISSION_MANAGE_SYSTEM) {
-		c.SetPermissionError(model.PERMISSION_MANAGE_SYSTEM)
-		return
-	}
-
-	scheme, err := c.App.GetScheme(c.Params.SchemeId)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	if scheme.Scope != model.SCHEME_SCOPE_TEAM {
-		c.Err = model.NewAppError("Api4.GetTeamsForScheme", "api.scheme.get_teams_for_scheme.scope.error", nil, "", http.StatusBadRequest)
-		return
-	}
-
-	teams, err := c.App.GetTeamsForSchemePage(scheme, c.Params.Page, c.Params.PerPage)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	w.Write([]byte(model.TeamListToJson(teams)))
-}
-
-func getChannelsForScheme(c *Context, w http.ResponseWriter, r *http.Request) {
-	c.RequireSchemeId()
-	if c.Err != nil {
-		return
-	}
-
-	if !c.App.SessionHasPermissionTo(*c.App.Session(), model.PERMISSION_MANAGE_SYSTEM) {
-		c.SetPermissionError(model.PERMISSION_MANAGE_SYSTEM)
-		return
-	}
-
-	scheme, err := c.App.GetScheme(c.Params.SchemeId)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	if scheme.Scope != model.SCHEME_SCOPE_CHANNEL {
-		c.Err = model.NewAppError("Api4.GetChannelsForScheme", "api.scheme.get_channels_for_scheme.scope.error", nil, "", http.StatusBadRequest)
-		return
-	}
-
-	channels, err := c.App.GetChannelsForSchemePage(scheme, c.Params.Page, c.Params.PerPage)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	w.Write([]byte(channels.ToJson()))
 }
 
 func patchScheme(c *Context, w http.ResponseWriter, r *http.Request) {

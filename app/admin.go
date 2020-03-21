@@ -13,10 +13,10 @@ import (
 
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/mailservice"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/mailservice"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 func (a *App) GetLogs(page, perPage int) ([]string, *model.AppError) {
@@ -151,12 +151,8 @@ func (a *App) InvalidateAllCachesSkipSend() {
 	mlog.Info("Purging all caches")
 	a.Srv().sessionCache.Purge()
 	a.Srv().statusCache.Purge()
-	a.Srv().Store.Team().ClearCaches()
-	a.Srv().Store.Channel().ClearCaches()
 	a.Srv().Store.User().ClearCaches()
-	a.Srv().Store.Post().ClearCaches()
 	a.Srv().Store.FileInfo().ClearCaches()
-	a.Srv().Store.Webhook().ClearCaches()
 	a.LoadLicense()
 }
 

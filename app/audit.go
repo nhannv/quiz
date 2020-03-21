@@ -4,7 +4,7 @@
 package app
 
 import (
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 func (a *App) GetAudits(userId string, limit int) (model.Audits, *model.AppError) {

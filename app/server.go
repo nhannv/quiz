@@ -24,19 +24,18 @@ import (
 	"github.com/throttled/throttled"
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/mattermost/mattermost-server/v5/config"
-	"github.com/mattermost/mattermost-server/v5/einterfaces"
-	"github.com/mattermost/mattermost-server/v5/jobs"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
-	"github.com/mattermost/mattermost-server/v5/services/cache"
-	"github.com/mattermost/mattermost-server/v5/services/cache/lru"
-	"github.com/mattermost/mattermost-server/v5/services/httpservice"
-	"github.com/mattermost/mattermost-server/v5/services/imageproxy"
-	"github.com/mattermost/mattermost-server/v5/services/timezones"
-	"github.com/mattermost/mattermost-server/v5/store"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/config"
+	"github.com/nhannv/quiz/v5/einterfaces"
+	"github.com/nhannv/quiz/v5/jobs"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/cache"
+	"github.com/nhannv/quiz/v5/services/cache/lru"
+	"github.com/nhannv/quiz/v5/services/httpservice"
+	"github.com/nhannv/quiz/v5/services/imageproxy"
+	"github.com/nhannv/quiz/v5/services/timezones"
+	"github.com/nhannv/quiz/v5/store"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 var MaxNotificationsPerChannelDefault int64 = 1000000
@@ -62,17 +61,12 @@ type Server struct {
 	goroutineCount      int32
 	goroutineExitSignal chan struct{}
 
-	PluginsEnvironment     *plugin.Environment
-	PluginConfigListenerId string
-	PluginsLock            sync.RWMutex
-
-	EmailBatching    *EmailBatchingJob
 	EmailRateLimiter *throttled.GCRARateLimiter
 
 	Hubs                        []*Hub
 	HubsStopCheckingForDeadlock chan bool
 
-	PushNotificationsHub PushNotificationsHub
+	// PushNotificationsHub PushNotificationsHub
 
 	runjobs bool
 	Jobs    *jobs.JobServer
@@ -89,7 +83,6 @@ type Server struct {
 
 	htmlTemplateWatcher     *utils.HTMLTemplateWatcher
 	sessionCache            cache.Cache
-	seenPendingPostIdsCache cache.Cache
 	statusCache             cache.Cache
 	configListenerId        string
 	licenseListenerId       string
@@ -98,9 +91,6 @@ type Server struct {
 	configStore             config.Store
 	asymmetricSigningKey    *ecdsa.PrivateKey
 	postActionCookieSecret  []byte
-
-	pluginCommands     []*PluginCommand
-	pluginCommandsLock sync.RWMutex
 
 	clientConfig        map[string]string
 	clientConfigHash    string
@@ -199,34 +189,11 @@ func NewServer(options ...Option) (*Server, error) {
 	s.CacheProvider.Connect()
 
 	s.sessionCache = s.CacheProvider.NewCache(model.SESSION_CACHE_SIZE)
-	s.seenPendingPostIdsCache = s.CacheProvider.NewCache(PENDING_POST_IDS_CACHE_SIZE)
 	s.statusCache = s.CacheProvider.NewCache(model.STATUS_CACHE_SIZE)
-
-	err := s.RunOldAppInitialization()
-	if err != nil {
-		return nil, err
-	}
 
 	model.AppErrorInit(utils.T)
 
 	s.timezones = timezones.New()
-	// Start email batching because it's not like the other jobs
-	s.InitEmailBatching()
-	s.AddConfigListener(func(_, _ *model.Config) {
-		s.InitEmailBatching()
-	})
-
-	// Start plugin health check job
-	pluginsEnvironment := s.PluginsEnvironment
-	if pluginsEnvironment != nil {
-		pluginsEnvironment.InitPluginHealthCheckJob(*s.Config().PluginSettings.Enable && *s.Config().PluginSettings.EnableHealthCheck)
-	}
-	s.AddConfigListener(func(_, c *model.Config) {
-		pluginsEnvironment := s.PluginsEnvironment
-		if pluginsEnvironment != nil {
-			pluginsEnvironment.InitPluginHealthCheckJob(*s.Config().PluginSettings.Enable && *c.PluginSettings.EnableHealthCheck)
-		}
-	})
 
 	logCurrentVersion := fmt.Sprintf("Current version is %v (%v/%v/%v/%v)", model.CurrentVersion, model.BuildNumber, model.BuildDate, model.BuildHash, model.BuildHashEnterprise)
 	mlog.Info(
@@ -270,8 +237,8 @@ func NewServer(options ...Option) (*Server, error) {
 	if model.BuildNumber == "dev" {
 		s.UpdateConfig(func(cfg *model.Config) { *cfg.ServiceSettings.EnableDeveloper = true })
 	}
-
-	if err := s.Store.Status().ResetAll(); err != nil {
+	status := s.Store
+	if err := status.Status().ResetAll(); err != nil {
 		mlog.Error("Error to reset the server status.", mlog.Err(err))
 	}
 
@@ -310,21 +277,11 @@ func NewServer(options ...Option) (*Server, error) {
 			runSecurityJob(s)
 		})
 		s.Go(func() {
-			runDiagnosticsJob(s)
-		})
-		s.Go(func() {
 			runSessionCleanupJob(s)
 		})
 		s.Go(func() {
 			runTokenCleanupJob(s)
 		})
-		s.Go(func() {
-			runCommandWebhookCleanupJob(s)
-		})
-
-		if complianceI := s.Compliance; complianceI != nil {
-			complianceI.StartComplianceDailyJob()
-		}
 
 		if *s.Config().JobSettings.RunJobs && s.Jobs != nil {
 			s.Jobs.StartWorkers()
@@ -687,24 +644,10 @@ func runSecurityJob(s *Server) {
 	}, time.Hour*4)
 }
 
-func runDiagnosticsJob(s *Server) {
-	doDiagnostics(s)
-	model.CreateRecurringTask("Diagnostics", func() {
-		doDiagnostics(s)
-	}, time.Hour*24)
-}
-
 func runTokenCleanupJob(s *Server) {
 	doTokenCleanup(s)
 	model.CreateRecurringTask("Token Cleanup", func() {
 		doTokenCleanup(s)
-	}, time.Hour*1)
-}
-
-func runCommandWebhookCleanupJob(s *Server) {
-	doCommandWebhookCleanup(s)
-	model.CreateRecurringTask("Command Hook Cleanup", func() {
-		doCommandWebhookCleanup(s)
 	}, time.Hour*1)
 }
 
@@ -719,18 +662,8 @@ func doSecurity(s *Server) {
 	s.DoSecurityUpdateCheck()
 }
 
-func doDiagnostics(s *Server) {
-	if *s.Config().LogSettings.EnableDiagnostics {
-		s.FakeApp().SendDailyDiagnostics()
-	}
-}
-
 func doTokenCleanup(s *Server) {
 	s.Store.Token().Cleanup()
-}
-
-func doCommandWebhookCleanup(s *Server) {
-	s.Store.CommandWebhook().Cleanup()
 }
 
 const (
@@ -790,25 +723,6 @@ func (s *Server) StartElasticsearch() {
 			})
 		}
 	})
-}
-
-func (s *Server) initDiagnostics(endpoint string) {
-	if s.diagnosticClient == nil {
-		config := analytics.Config{}
-		config.Logger = analytics.StdLogger(s.Log.StdLog(mlog.String("source", "segment")))
-		// For testing
-		if endpoint != "" {
-			config.Endpoint = endpoint
-			config.Verbose = true
-			config.BatchSize = 1
-		}
-		client, _ := analytics.NewWithConfig(SEGMENT_KEY, config)
-		client.Enqueue(analytics.Identify{
-			UserId: s.diagnosticId,
-		})
-
-		s.diagnosticClient = client
-	}
 }
 
 // shutdownDiagnostics closes the diagnostic client.

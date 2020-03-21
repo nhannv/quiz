@@ -18,10 +18,10 @@ import (
 	"net/http"
 
 	"github.com/jaytaylor/html2text"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/filesstore"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/filesstore"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 type mailData struct {

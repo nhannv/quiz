@@ -6,7 +6,7 @@ package app
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 func (a *App) GetScheme(id string) (*model.Scheme, *model.AppError) {
@@ -48,8 +48,10 @@ func (a *App) CreateScheme(scheme *model.Scheme) (*model.Scheme, *model.AppError
 
 	// Clear any user-provided values for trusted properties.
 	scheme.DefaultSchoolAdminRole = ""
-	scheme.DefaultSchoolTeacherRole = ""
-	scheme.DefaultSchoolParentRole = ""
+	scheme.DefaultBranchAdminRole = ""
+	scheme.DefaultBranchAccountantRole = ""
+	scheme.DefaultClassTeacherRole = ""
+	scheme.DefaultClassParentRole = ""
 	scheme.DefaultTeamAdminRole = ""
 	scheme.DefaultTeamUserRole = ""
 	scheme.DefaultTeamGuestRole = ""
@@ -91,41 +93,6 @@ func (a *App) DeleteScheme(schemeId string) (*model.Scheme, *model.AppError) {
 	}
 
 	return a.Srv().Store.Scheme().Delete(schemeId)
-}
-
-func (a *App) GetTeamsForSchemePage(scheme *model.Scheme, page int, perPage int) ([]*model.Team, *model.AppError) {
-	if err := a.IsPhase2MigrationCompleted(); err != nil {
-		return nil, err
-	}
-
-	return a.GetTeamsForScheme(scheme, page*perPage, perPage)
-}
-
-func (a *App) GetTeamsForScheme(scheme *model.Scheme, offset int, limit int) ([]*model.Team, *model.AppError) {
-	if err := a.IsPhase2MigrationCompleted(); err != nil {
-		return nil, err
-	}
-
-	teams, err := a.Srv().Store.Team().GetTeamsByScheme(scheme.Id, offset, limit)
-	if err != nil {
-		return nil, err
-	}
-	return teams, nil
-}
-
-func (a *App) GetChannelsForSchemePage(scheme *model.Scheme, page int, perPage int) (model.ChannelList, *model.AppError) {
-	if err := a.IsPhase2MigrationCompleted(); err != nil {
-		return nil, err
-	}
-
-	return a.GetChannelsForScheme(scheme, page*perPage, perPage)
-}
-
-func (a *App) GetChannelsForScheme(scheme *model.Scheme, offset int, limit int) (model.ChannelList, *model.AppError) {
-	if err := a.IsPhase2MigrationCompleted(); err != nil {
-		return nil, err
-	}
-	return a.Srv().Store.Channel().GetChannelsByScheme(scheme.Id, offset, limit)
 }
 
 func (a *App) IsPhase2MigrationCompleted() *model.AppError {

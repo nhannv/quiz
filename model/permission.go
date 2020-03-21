@@ -8,6 +8,7 @@ const (
 	PERMISSION_SCOPE_TEAM    = "team_scope"
 	PERMISSION_SCOPE_CHANNEL = "channel_scope"
 	PERMISSION_SCOPE_SCHOOL  = "school_scope"
+	PERMISSION_SCOPE_BRANCH  = "branch_scope"
 	PERMISSION_SCOPE_CLASS   = "class_scope"
 )
 
@@ -19,10 +20,31 @@ type Permission struct {
 }
 
 var PERMISSION_MANAGE_SCHOOL *Permission
-var PERMISSION_CREATE_KID *Permission
-var PERMISSION_MANAGE_KID *Permission
-var PERMISSION_MANAGE_CLASS *Permission
+
 var PERMISSION_MANAGE_ACTIVITY *Permission
+var PERMISSION_MANAGE_ABSENT *Permission
+
+var PERMISSION_ADD_USER_TO_BRANCH *Permission
+var PERMISSION_REMOVE_USER_FROM_BRANCH *Permission
+var PERMISSION_MANAGE_BRANCH *Permission
+var PERMISSION_CREATE_BRANCH *Permission
+var PERMISSION_MANAGE_BRANCH_ROLES *Permission
+var PERMISSION_LIST_BRANCHES *Permission
+var PERMISSION_LIST_BRANCH_CLASSES *Permission
+var PERMISSION_VIEW_BRANCH *Permission
+var PERMISSION_CREATE_KID *Permission
+
+var PERMISSION_REMOVE_USER_FROM_CLASS *Permission
+var PERMISSION_MANAGE_CLASS *Permission
+var PERMISSION_CREATE_CLASS *Permission
+var PERMISSION_DELETE_CLASS *Permission
+var PERMISSION_MANAGE_CLASS_ROLES *Permission
+
+var PERMISSION_LIST_CLASS_KIDS *Permission
+var PERMISSION_VIEW_CLASS *Permission
+var PERMISSION_MANAGE_KID *Permission
+var PERMISSION_MANAGE_CLASS_MEMBERS *Permission
+
 var PERMISSION_INVITE_USER *Permission
 var PERMISSION_ADD_USER_TO_TEAM *Permission
 var PERMISSION_USE_SLASH_COMMANDS *Permission
@@ -113,28 +135,132 @@ func initializePermissions() {
 		"authentication.permissions.manage_school.description",
 		PERMISSION_SCOPE_SCHOOL,
 	}
-	PERMISSION_CREATE_KID = &Permission{
-		"create_kid",
-		"authentication.permissions.create_kid.name",
-		"authentication.permissions.create_kid.description",
-		PERMISSION_SCOPE_SCHOOL,
+	PERMISSION_ADD_USER_TO_BRANCH = &Permission{
+		"add_user_from_branch",
+		"authentication.permissions.add_user_from_branch.name",
+		"authentication.permissions.add_user_from_branch.description",
+		PERMISSION_SCOPE_BRANCH,
 	}
-	PERMISSION_MANAGE_KID = &Permission{
-		"manage_kid",
-		"authentication.permissions.manage_kid.name",
-		"authentication.permissions.manage_kid.description",
-		PERMISSION_SCOPE_SCHOOL,
+	PERMISSION_REMOVE_USER_FROM_BRANCH = &Permission{
+		"remove_user_from_branch",
+		"authentication.permissions.remove_user_from_branch.name",
+		"authentication.permissions.remove_user_from_branch.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_BRANCH = &Permission{
+		"manage_branch",
+		"authentication.permissions.manage_branch.name",
+		"authentication.permissions.manage_branch.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_CREATE_BRANCH = &Permission{
+		"create_branch",
+		"authentication.permissions.create_branch.name",
+		"authentication.permissions.create_branch.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_BRANCH_ROLES = &Permission{
+		"manage_branch_roles",
+		"authentication.permissions.manage_branch_roles.name",
+		"authentication.permissions.manage_branch_roles.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_LIST_BRANCHES = &Permission{
+		"list_branches",
+		"authentication.permissions.list_branches.name",
+		"authentication.permissions.list_branches.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_LIST_BRANCH_CLASSES = &Permission{
+		"list_branch_classes",
+		"authentication.permissions.list_branch_classes.name",
+		"authentication.permissions.list_branch_classes.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_VIEW_BRANCH = &Permission{
+		"view_branch",
+		"authentication.permissions.view_branch.name",
+		"authentication.permissions.view_branch.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_CLASS_MEMBERS = &Permission{
+		"manage_class_members",
+		"authentication.permissions.manage_class_members.name",
+		"authentication.permissions.manage_class_members.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+
+	PERMISSION_REMOVE_USER_FROM_CLASS = &Permission{
+		"remove_user_from_class",
+		"authentication.permissions.remove_user_from_class.name",
+		"authentication.permissions.remove_user_from_class.description",
+		PERMISSION_SCOPE_BRANCH,
 	}
 	PERMISSION_MANAGE_CLASS = &Permission{
 		"manage_class",
 		"authentication.permissions.manage_class.name",
 		"authentication.permissions.manage_class.description",
-		PERMISSION_SCOPE_SCHOOL,
+		PERMISSION_SCOPE_BRANCH,
 	}
+	PERMISSION_CREATE_CLASS = &Permission{
+		"create_class",
+		"authentication.permissions.create_class.name",
+		"authentication.permissions.create_class.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_DELETE_CLASS = &Permission{
+		"delete_class",
+		"authentication.permissions.delete_class.name",
+		"authentication.permissions.delete_class.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_CLASS_ROLES = &Permission{
+		"manage_class_roles",
+		"authentication.permissions.manage_class_roles.name",
+		"authentication.permissions.manage_class_roles.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_LIST_CLASS_KIDS = &Permission{
+		"list_class_kids",
+		"authentication.permissions.list_class_kids.name",
+		"authentication.permissions.list_class_kids.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_VIEW_CLASS = &Permission{
+		"view_class",
+		"authentication.permissions.view_class.name",
+		"authentication.permissions.view_class.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_CREATE_KID = &Permission{
+		"create_kid",
+		"authentication.permissions.create_kid.name",
+		"authentication.permissions.create_kid.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_KID = &Permission{
+		"manage_kid",
+		"authentication.permissions.manage_kid.name",
+		"authentication.permissions.manage_kid.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+	PERMISSION_MANAGE_CLASS = &Permission{
+		"manage_class",
+		"authentication.permissions.manage_class.name",
+		"authentication.permissions.manage_class.description",
+		PERMISSION_SCOPE_BRANCH,
+	}
+
 	PERMISSION_MANAGE_ACTIVITY = &Permission{
 		"manage_activity",
 		"authentication.permissions.manage_activity.name",
 		"authentication.permissions.manage_activity.description",
+		PERMISSION_SCOPE_SCHOOL,
+	}
+	PERMISSION_MANAGE_ABSENT = &Permission{
+		"manage_absent",
+		"authentication.permissions.manage_absent.name",
+		"authentication.permissions.manage_absent.description",
 		PERMISSION_SCOPE_SCHOOL,
 	}
 	PERMISSION_INVITE_USER = &Permission{
@@ -603,10 +729,29 @@ func initializePermissions() {
 
 	ALL_PERMISSIONS = []*Permission{
 		PERMISSION_MANAGE_SCHOOL,
+
+		PERMISSION_ADD_USER_TO_BRANCH,
+		PERMISSION_REMOVE_USER_FROM_BRANCH,
+		PERMISSION_MANAGE_BRANCH,
+		PERMISSION_CREATE_BRANCH,
+		PERMISSION_MANAGE_BRANCH_ROLES,
+		PERMISSION_LIST_BRANCHES,
+		PERMISSION_LIST_BRANCH_CLASSES,
+		PERMISSION_VIEW_BRANCH,
+		PERMISSION_MANAGE_CLASS_MEMBERS,
+
+		PERMISSION_REMOVE_USER_FROM_CLASS,
+		PERMISSION_MANAGE_CLASS,
+		PERMISSION_CREATE_CLASS,
+		PERMISSION_DELETE_CLASS,
+		PERMISSION_MANAGE_CLASS_ROLES,
+		PERMISSION_LIST_CLASS_KIDS,
+		PERMISSION_VIEW_CLASS,
 		PERMISSION_CREATE_KID,
 		PERMISSION_MANAGE_KID,
-		PERMISSION_MANAGE_CLASS,
 		PERMISSION_MANAGE_ACTIVITY,
+		PERMISSION_MANAGE_ABSENT,
+
 		PERMISSION_INVITE_USER,
 		PERMISSION_ADD_USER_TO_TEAM,
 		PERMISSION_USE_SLASH_COMMANDS,

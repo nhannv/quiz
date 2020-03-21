@@ -57,7 +57,7 @@ pipeline {
                 platformStages.platformCleanDockerCompose(rndEE)
               }
             }
-            stash includes: 'src/github.com/mattermost/mattermost-server/dist/**', name: 'eedist'
+            stash includes: 'src/github.com/nhannv/quiz/dist/**', name: 'eedist'
           }
         }
         stage ('Build TE') {
@@ -77,7 +77,7 @@ pipeline {
                 platformStages.platformCleanDockerCompose(rndTE)
               }
             }
-            stash includes: 'src/github.com/mattermost/mattermost-server/dist/**', name: 'tedist'
+            stash includes: 'src/github.com/nhannv/quiz/dist/**', name: 'tedist'
           }
         }
       }
@@ -124,7 +124,7 @@ pipeline {
           forcefullyCleanWorkspace(mmBuilderServer)
           platformStages.platformCheckoutTE(env.BRANCH_NAME)
         }
-        dir('src/github.com/mattermost/mattermost-server') {
+        dir('src/github.com/nhannv/quiz') {
           withCredentials([usernamePassword(credentialsId: 'matterbuild-docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
             sh 'docker login --username ${DOCKER_USER} --password ${DOCKER_PASS}'
             sh """

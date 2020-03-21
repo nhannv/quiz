@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/httpservice"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/httpservice"
 	"github.com/pkg/errors"
 )
 

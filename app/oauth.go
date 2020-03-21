@@ -15,11 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/einterfaces"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/store"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 const (
@@ -472,147 +470,6 @@ func (a *App) RevokeAccessToken(token string) *model.AppError {
 	return nil
 }
 
-func (a *App) CompleteOAuth(service string, body io.ReadCloser, teamId string, props map[string]string) (*model.User, *model.AppError) {
-	defer body.Close()
-
-	action := props["action"]
-
-	switch action {
-	case model.OAUTH_ACTION_SIGNUP:
-		return a.CreateOAuthUser(service, body, teamId)
-	case model.OAUTH_ACTION_LOGIN:
-		return a.LoginByOAuth(service, body, teamId)
-	case model.OAUTH_ACTION_EMAIL_TO_SSO:
-		return a.CompleteSwitchWithOAuth(service, body, props["email"])
-	case model.OAUTH_ACTION_SSO_TO_EMAIL:
-		return a.LoginByOAuth(service, body, teamId)
-	default:
-		return a.LoginByOAuth(service, body, teamId)
-	}
-}
-
-func (a *App) LoginByOAuth(service string, userData io.Reader, teamId string) (*model.User, *model.AppError) {
-	provider := einterfaces.GetOauthProvider(service)
-	if provider == nil {
-		return nil, model.NewAppError("LoginByOAuth", "api.user.login_by_oauth.not_available.app_error",
-			map[string]interface{}{"Service": strings.Title(service)}, "", http.StatusNotImplemented)
-	}
-
-	buf := bytes.Buffer{}
-	if _, err := buf.ReadFrom(userData); err != nil {
-		return nil, model.NewAppError("LoginByOAuth", "api.user.login_by_oauth.parse.app_error",
-			map[string]interface{}{"Service": service}, "", http.StatusBadRequest)
-	}
-	authUser := provider.GetUserFromJson(bytes.NewReader(buf.Bytes()))
-
-	authData := ""
-	if authUser.AuthData != nil {
-		authData = *authUser.AuthData
-	}
-
-	if len(authData) == 0 {
-		return nil, model.NewAppError("LoginByOAuth", "api.user.login_by_oauth.parse.app_error",
-			map[string]interface{}{"Service": service}, "", http.StatusBadRequest)
-	}
-
-	user, err := a.GetUserByAuth(&authData, service)
-	if err != nil {
-		if err.Id == store.MISSING_AUTH_ACCOUNT_ERROR {
-			user, err = a.CreateOAuthUser(service, bytes.NewReader(buf.Bytes()), teamId)
-		} else {
-			return nil, err
-		}
-	} else {
-		// OAuth doesn't run through CheckUserPreflightAuthenticationCriteria, so prevent bot login
-		// here manually. Technically, the auth data above will fail to match a bot in the first
-		// place, but explicit is always better.
-		if user.IsBot {
-			return nil, model.NewAppError("loginByOAuth", "api.user.login_by_oauth.bot_login_forbidden.app_error", nil, "", http.StatusForbidden)
-		}
-
-		if err = a.UpdateOAuthUserAttrs(bytes.NewReader(buf.Bytes()), user, provider, service); err != nil {
-			return nil, err
-		}
-		if len(teamId) > 0 {
-			err = a.AddUserToTeamByTeamId(teamId, user)
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (a *App) CompleteSwitchWithOAuth(service string, userData io.Reader, email string) (*model.User, *model.AppError) {
-	provider := einterfaces.GetOauthProvider(service)
-	if provider == nil {
-		return nil, model.NewAppError("CompleteSwitchWithOAuth", "api.user.complete_switch_with_oauth.unavailable.app_error",
-			map[string]interface{}{"Service": strings.Title(service)}, "", http.StatusNotImplemented)
-	}
-	ssoUser := provider.GetUserFromJson(userData)
-	ssoEmail := ssoUser.Email
-
-	authData := ""
-	if ssoUser.AuthData != nil {
-		authData = *ssoUser.AuthData
-	}
-
-	if len(authData) == 0 {
-		return nil, model.NewAppError("CompleteSwitchWithOAuth", "api.user.complete_switch_with_oauth.parse.app_error",
-			map[string]interface{}{"Service": service}, "", http.StatusBadRequest)
-	}
-
-	if len(email) == 0 {
-		return nil, model.NewAppError("CompleteSwitchWithOAuth", "api.user.complete_switch_with_oauth.blank_email.app_error", nil, "", http.StatusBadRequest)
-	}
-
-	user, err := a.Srv().Store.User().GetByEmail(email)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = a.RevokeAllSessions(user.Id); err != nil {
-		return nil, err
-	}
-
-	if _, err = a.Srv().Store.User().UpdateAuthData(user.Id, service, &authData, ssoEmail, true); err != nil {
-		return nil, err
-	}
-
-	a.Srv().Go(func() {
-		if err = a.SendSignInChangeEmail(user.Email, strings.Title(service)+" SSO", user.Locale, a.GetSiteURL()); err != nil {
-			mlog.Error("error sending signin change email", mlog.Err(err))
-		}
-	})
-
-	return user, nil
-}
-
-func (a *App) CreateOAuthStateToken(extra string) (*model.Token, *model.AppError) {
-	token := model.NewToken(model.TOKEN_TYPE_OAUTH, extra)
-
-	if err := a.Srv().Store.Token().Save(token); err != nil {
-		return nil, err
-	}
-
-	return token, nil
-}
-
-func (a *App) GetOAuthStateToken(token string) (*model.Token, *model.AppError) {
-	mToken, err := a.Srv().Store.Token().GetByToken(token)
-	if err != nil {
-		return nil, model.NewAppError("GetOAuthStateToken", "api.oauth.invalid_state_token.app_error", nil, err.Error(), http.StatusBadRequest)
-	}
-
-	if mToken.Type != model.TOKEN_TYPE_OAUTH {
-		return nil, model.NewAppError("GetOAuthStateToken", "api.oauth.invalid_state_token.app_error", nil, "", http.StatusBadRequest)
-	}
-
-	return mToken, nil
-}
-
 func (a *App) GetAuthorizationCode(w http.ResponseWriter, r *http.Request, service string, props map[string]string, loginHint string) (string, *model.AppError) {
 	sso := a.Config().GetSSOService(service)
 	if sso == nil || !*sso.Enable {
@@ -671,6 +528,29 @@ func (a *App) GetAuthorizationCode(w http.ResponseWriter, r *http.Request, servi
 	}
 
 	return authUrl, nil
+}
+
+func (a *App) CreateOAuthStateToken(extra string) (*model.Token, *model.AppError) {
+	token := model.NewToken(model.TOKEN_TYPE_OAUTH, extra)
+
+	if err := a.Srv().Store.Token().Save(token); err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+func (a *App) GetOAuthStateToken(token string) (*model.Token, *model.AppError) {
+	mToken, err := a.Srv().Store.Token().GetByToken(token)
+	if err != nil {
+		return nil, model.NewAppError("GetOAuthStateToken", "api.oauth.invalid_state_token.app_error", nil, err.Error(), http.StatusBadRequest)
+	}
+
+	if mToken.Type != model.TOKEN_TYPE_OAUTH {
+		return nil, model.NewAppError("GetOAuthStateToken", "api.oauth.invalid_state_token.app_error", nil, "", http.StatusBadRequest)
+	}
+
+	return mToken, nil
 }
 
 func (a *App) AuthorizeOAuthUser(w http.ResponseWriter, r *http.Request, service, code, state, redirectUri string) (io.ReadCloser, string, map[string]string, *model.AppError) {

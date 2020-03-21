@@ -1,8 +1,8 @@
 ## About this folder
 
-This folder contains some files that we use to build the `mattermost-server` using `Jenkins` and other files like privacy policy and licenses.
+This folder contains some files that we use to build the `quiz` using `Jenkins` and other files like privacy policy and licenses.
 
-PRs opened against the `mattermost-server` repository will use the file called `Jenkinsfile.pr`
+PRs opened against the `quiz` repository will use the file called `Jenkinsfile.pr`
 
 The `Dockerfile` in this folder (`Dockerfile.buildenv`) is the build environment for our current builds you can find the docker image to download [here](https://hub.docker.com/r/mattermost/mattermost-build-server/tags/) or build your own.
 
@@ -10,7 +10,7 @@ The `Dockerfile` in this folder (`Dockerfile.buildenv`) is the build environment
 
 ### Docker Image for building the Server
 
-We have a docker image to build `mattermost-server` and it is based on Go docker image.
+We have a docker image to build `quiz` and it is based on Go docker image.
 
 In our Docker Hub Repository we have the following images:
 

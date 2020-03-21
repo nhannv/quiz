@@ -6,11 +6,8 @@ package web
 import (
 	"net/http"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-server/v5/model"
 )
 
 const (
@@ -25,33 +22,13 @@ const (
 
 type Params struct {
 	UserId                 string
-	SchoolId               string
-	BranchId               string
-	ClassId                string
-	KidId                  string
-	ScheduleId             string
-	MenuId                 string
-	EventId                string
-	HealthId               string
-	Week                   int
-	Year                   int
-	TeamId                 string
-	InviteId               string
 	TokenId                string
-	ChannelId              string
-	PostId                 string
 	FileId                 string
 	Filename               string
-	PluginId               string
-	CommandId              string
-	HookId                 string
-	ReportId               string
 	EmojiId                string
 	AppId                  string
 	Email                  string
 	Username               string
-	TeamName               string
-	ChannelName            string
 	PreferenceName         string
 	EmojiName              string
 	Category               string
@@ -63,14 +40,11 @@ type Params struct {
 	RoleName               string
 	SchemeId               string
 	Scope                  string
-	GroupId                string
 	Page                   int
 	PerPage                int
 	LogsPerPage            int
 	Permanent              bool
 	RemoteId               string
-	SyncableId             string
-	SyncableType           model.GroupSyncableType
 	BotUserId              string
 	Q                      string
 	IsLinked               *bool
@@ -97,72 +71,8 @@ func ParamsFromRequest(r *http.Request) *Params {
 		params.UserId = val
 	}
 
-	if val, ok := props["school_id"]; ok {
-		params.SchoolId = val
-	}
-
-	if val, ok := props["branch_id"]; ok {
-		params.BranchId = val
-	}
-
-	if val, ok := props["class_id"]; ok {
-		params.ClassId = val
-	}
-
-	if val, ok := props["schedule_id"]; ok {
-		params.ScheduleId = val
-	}
-
-	if val, ok := props["menu_id"]; ok {
-		params.MenuId = val
-	}
-
-	if val, ok := props["health_id"]; ok {
-		params.HealthId = val
-	}
-
-	y, w := time.Now().ISOWeek()
-
-	if val, err := strconv.Atoi(query.Get("week")); err != nil || val < 0 {
-		params.Week = w
-	} else {
-		params.Week = val
-	}
-
-	if val, err := strconv.Atoi(query.Get("year")); err != nil || val < 0 {
-		params.Year = y
-	} else {
-		params.Year = val
-	}
-
-	if val, ok := props["event_id"]; ok {
-		params.EventId = val
-	}
-
-	if val, ok := props["kid_id"]; ok {
-		params.KidId = val
-	}
-
-	if val, ok := props["team_id"]; ok {
-		params.TeamId = val
-	}
-
-	if val, ok := props["invite_id"]; ok {
-		params.InviteId = val
-	}
-
 	if val, ok := props["token_id"]; ok {
 		params.TokenId = val
-	}
-
-	if val, ok := props["channel_id"]; ok {
-		params.ChannelId = val
-	} else {
-		params.ChannelId = query.Get("channel_id")
-	}
-
-	if val, ok := props["post_id"]; ok {
-		params.PostId = val
 	}
 
 	if val, ok := props["file_id"]; ok {
@@ -170,22 +80,6 @@ func ParamsFromRequest(r *http.Request) *Params {
 	}
 
 	params.Filename = query.Get("filename")
-
-	if val, ok := props["plugin_id"]; ok {
-		params.PluginId = val
-	}
-
-	if val, ok := props["command_id"]; ok {
-		params.CommandId = val
-	}
-
-	if val, ok := props["hook_id"]; ok {
-		params.HookId = val
-	}
-
-	if val, ok := props["report_id"]; ok {
-		params.ReportId = val
-	}
 
 	if val, ok := props["emoji_id"]; ok {
 		params.EmojiId = val
@@ -201,14 +95,6 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, ok := props["username"]; ok {
 		params.Username = val
-	}
-
-	if val, ok := props["team_name"]; ok {
-		params.TeamName = strings.ToLower(val)
-	}
-
-	if val, ok := props["channel_name"]; ok {
-		params.ChannelName = strings.ToLower(val)
 	}
 
 	if val, ok := props["category"]; ok {
@@ -249,10 +135,6 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, ok := props["scheme_id"]; ok {
 		params.SchemeId = val
-	}
-
-	if val, ok := props["group_id"]; ok {
-		params.GroupId = val
 	}
 
 	if val, ok := props["remote_id"]; ok {
@@ -301,19 +183,6 @@ func ParamsFromRequest(r *http.Request) *Params {
 		params.LimitBefore = LIMIT_MAXIMUM
 	} else {
 		params.LimitBefore = val
-	}
-
-	if val, ok := props["syncable_id"]; ok {
-		params.SyncableId = val
-	}
-
-	if val, ok := props["syncable_type"]; ok {
-		switch val {
-		case "teams":
-			params.SyncableType = model.GroupSyncableTypeTeam
-		case "channels":
-			params.SyncableType = model.GroupSyncableTypeChannel
-		}
 	}
 
 	if val, ok := props["bot_user_id"]; ok {

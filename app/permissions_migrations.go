@@ -4,7 +4,7 @@
 package app
 
 import (
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 type permissionTransformation struct {
@@ -58,6 +58,12 @@ const (
 	PERMISSION_PROMOTE_GUEST                     = "promote_guest"
 	PERMISSION_DEMOTE_TO_GUEST                   = "demote_to_guest"
 	PERMISSION_MANAGE_SCHOOL                     = "manage_school"
+	PERMISSION_REMOVE_USER_FROM_BRANCH           = "remove_user_from_branch"
+	PERMISSION_MANAGE_BRANCH                     = "manage_branch"
+	PERMISSION_CREATE_BRANCH                     = "create_branch"
+	PERMISSION_MANAGE_BRANCH_ROLES               = "manage_branch_roles"
+	PERMISSION_LIST_BRANCH_CLASSES               = "list_branch_classes"
+	PERMISSION_VIEW_BRANCH                       = "view_branch"
 	PERMISSION_CREATE_KID                        = "create_kid"
 	PERMISSION_MANAGE_KID                        = "manage_kid"
 	PERMISSION_MANAGE_CLASS                      = "manage_class"

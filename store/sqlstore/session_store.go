@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/store"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/store"
 )
 
 const (
@@ -52,71 +52,8 @@ func (me SqlSessionStore) Save(session *model.Session) (*model.Session, *model.A
 
 	session.PreSave()
 
-	tcs := make(chan store.StoreResult, 1)
-	go func() {
-		teams, err := me.Team().GetTeamsForUser(session.UserId)
-		tcs <- store.StoreResult{Data: teams, Err: err}
-		close(tcs)
-	}()
-
-	scs := make(chan store.StoreResult, 1)
-	go func() {
-		schools, err := me.School().GetSchoolsForUser(session.UserId)
-		scs <- store.StoreResult{Data: schools, Err: err}
-		close(scs)
-	}()
-
-	gcs := make(chan store.StoreResult, 1)
-	go func() {
-		guardians, err := me.Kid().GetGuardiansByUser(session.UserId)
-		gcs <- store.StoreResult{Data: guardians, Err: err}
-		close(gcs)
-	}()
-
 	if err := me.GetMaster().Insert(session); err != nil {
 		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+err.Error(), http.StatusInternalServerError)
-	}
-
-	rtcs := <-tcs
-
-	if rtcs.Err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+rtcs.Err.Error(), http.StatusInternalServerError)
-	}
-
-	tempMembers := rtcs.Data.([]*model.TeamMember)
-	session.TeamMembers = make([]*model.TeamMember, 0, len(tempMembers))
-	for _, tm := range tempMembers {
-		if tm.DeleteAt == 0 {
-			session.TeamMembers = append(session.TeamMembers, tm)
-		}
-	}
-
-	rscs := <-scs
-
-	if rscs.Err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+rscs.Err.Error(), http.StatusInternalServerError)
-	}
-
-	tempSchoolMembers := rscs.Data.([]*model.SchoolMember)
-	session.SchoolMembers = make([]*model.SchoolMember, 0, len(tempSchoolMembers))
-	for _, sm := range tempSchoolMembers {
-		if sm.DeleteAt == 0 {
-			session.SchoolMembers = append(session.SchoolMembers, sm)
-		}
-	}
-
-	rgcs := <-gcs
-
-	if rscs.Err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Save", "store.sql_session.save.app_error", nil, "id="+session.Id+", "+rscs.Err.Error(), http.StatusInternalServerError)
-	}
-
-	tempGuardians := rgcs.Data.([]*model.KidGuardian)
-	session.KidGuardians = make([]*model.KidGuardian, 0, len(tempGuardians))
-	for _, sm := range tempGuardians {
-		if sm.DeleteAt == 0 {
-			session.KidGuardians = append(session.KidGuardians, sm)
-		}
 	}
 
 	return session, nil
@@ -132,70 +69,16 @@ func (me SqlSessionStore) Get(sessionIdOrToken string) (*model.Session, *model.A
 	}
 	session := sessions[0]
 
-	tempMembers, err := me.Team().GetTeamsForUser(sessions[0].UserId)
-	if err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Get", "store.sql_session.get.app_error", nil, "sessionIdOrToken="+sessionIdOrToken+", "+err.Error(), http.StatusInternalServerError)
-	}
-	sessions[0].TeamMembers = make([]*model.TeamMember, 0, len(tempMembers))
-	for _, tm := range tempMembers {
-		if tm.DeleteAt == 0 {
-			sessions[0].TeamMembers = append(sessions[0].TeamMembers, tm)
-		}
-	}
-
-	// Add schools to session
-	tempSchoolMembers, err := me.School().GetSchoolsForUser(sessions[0].UserId)
-	if err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Get", "store.sql_session.get.app_error", nil, "sessionIdOrToken="+sessionIdOrToken+", "+err.Error(), http.StatusInternalServerError)
-	}
-	sessions[0].SchoolMembers = make([]*model.SchoolMember, 0, len(tempSchoolMembers))
-	for _, sm := range tempSchoolMembers {
-		if sm.DeleteAt == 0 {
-			sessions[0].SchoolMembers = append(sessions[0].SchoolMembers, sm)
-		}
-	}
-
-	// Add guardians to session
-	tempGuardians, err := me.Kid().GetGuardiansByUser(sessions[0].UserId)
-	if err != nil {
-		return nil, model.NewAppError("SqlSessionStore.Get", "store.sql_session.get.app_error", nil, "sessionIdOrToken="+sessionIdOrToken+", "+err.Error(), http.StatusInternalServerError)
-	}
-	sessions[0].KidGuardians = make([]*model.KidGuardian, 0, len(tempGuardians))
-	for _, gm := range tempGuardians {
-		if gm.DeleteAt == 0 {
-			sessions[0].KidGuardians = append(sessions[0].KidGuardians, gm)
-		}
-	}
 	return session, nil
 }
 
 func (me SqlSessionStore) GetSessions(userId string) ([]*model.Session, *model.AppError) {
 	var sessions []*model.Session
 
-	tcs := make(chan store.StoreResult, 1)
-	go func() {
-		teams, err := me.Team().GetTeamsForUser(userId)
-		tcs <- store.StoreResult{Data: teams, Err: err}
-		close(tcs)
-	}()
 	if _, err := me.GetReplica().Select(&sessions, "SELECT * FROM Sessions WHERE UserId = :UserId ORDER BY LastActivityAt DESC", map[string]interface{}{"UserId": userId}); err != nil {
 		return nil, model.NewAppError("SqlSessionStore.GetSessions", "store.sql_session.get_sessions.app_error", nil, err.Error(), http.StatusInternalServerError)
 	}
 
-	rtcs := <-tcs
-	if rtcs.Err != nil {
-		return nil, model.NewAppError("SqlSessionStore.GetSessions", "store.sql_session.get_sessions.app_error", nil, rtcs.Err.Error(), http.StatusInternalServerError)
-	}
-
-	for _, session := range sessions {
-		tempMembers := rtcs.Data.([]*model.TeamMember)
-		session.TeamMembers = make([]*model.TeamMember, 0, len(tempMembers))
-		for _, tm := range tempMembers {
-			if tm.DeleteAt == 0 {
-				session.TeamMembers = append(session.TeamMembers, tm)
-			}
-		}
-	}
 	return sessions, nil
 }
 

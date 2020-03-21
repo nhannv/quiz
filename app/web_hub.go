@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 const (
@@ -31,7 +31,7 @@ type WebConnActivityMessage struct {
 
 type Hub struct {
 	// connectionCount should be kept first.
-	// See https://github.com/mattermost/mattermost-server/pull/7281
+	// See https://github.com/nhannv/quiz/pull/7281
 	connectionCount int64
 	app             *App
 	connectionIndex int
@@ -176,14 +176,6 @@ func (a *App) Publish(message *model.WebSocketEvent) {
 			Data:     message.ToJson(),
 		}
 
-		if message.EventType() == model.WEBSOCKET_EVENT_POSTED ||
-			message.EventType() == model.WEBSOCKET_EVENT_POST_EDITED ||
-			message.EventType() == model.WEBSOCKET_EVENT_DIRECT_ADDED ||
-			message.EventType() == model.WEBSOCKET_EVENT_GROUP_ADDED ||
-			message.EventType() == model.WEBSOCKET_EVENT_ADDED_TO_TEAM {
-			cm.SendType = model.CLUSTER_SEND_RELIABLE
-		}
-
 		a.Cluster().SendClusterMessage(cm)
 	}
 }
@@ -201,68 +193,9 @@ func (a *App) PublishSkipClusterSend(message *model.WebSocketEvent) {
 	}
 }
 
-func (a *App) InvalidateCacheForChannel(channel *model.Channel) {
-	a.Srv().Store.Channel().InvalidateChannel(channel.Id)
-	a.InvalidateCacheForChannelByNameSkipClusterSend(channel.TeamId, channel.Name)
-
-	if a.Cluster() != nil {
-		nameMsg := &model.ClusterMessage{
-			Event:    model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_CHANNEL_BY_NAME,
-			SendType: model.CLUSTER_SEND_BEST_EFFORT,
-			Props:    make(map[string]string),
-		}
-
-		nameMsg.Props["name"] = channel.Name
-		if channel.TeamId == "" {
-			nameMsg.Props["id"] = "dm"
-		} else {
-			nameMsg.Props["id"] = channel.TeamId
-		}
-
-		a.Cluster().SendClusterMessage(nameMsg)
-	}
-}
-
-func (a *App) InvalidateCacheForChannelMembers(channelId string) {
-	a.Srv().Store.User().InvalidateProfilesInChannelCache(channelId)
-	a.Srv().Store.Channel().InvalidateMemberCount(channelId)
-	a.Srv().Store.Channel().InvalidateGuestCount(channelId)
-}
-
-func (a *App) InvalidateCacheForChannelMembersNotifyProps(channelId string) {
-	a.InvalidateCacheForChannelMembersNotifyPropsSkipClusterSend(channelId)
-
-	if a.Cluster() != nil {
-		msg := &model.ClusterMessage{
-			Event:    model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_CHANNEL_MEMBERS_NOTIFY_PROPS,
-			SendType: model.CLUSTER_SEND_BEST_EFFORT,
-			Data:     channelId,
-		}
-		a.Cluster().SendClusterMessage(msg)
-	}
-}
-
-func (a *App) InvalidateCacheForChannelMembersNotifyPropsSkipClusterSend(channelId string) {
-	a.Srv().Store.Channel().InvalidateCacheForChannelMembersNotifyProps(channelId)
-}
-
-func (a *App) InvalidateCacheForChannelByNameSkipClusterSend(teamId, name string) {
-	if teamId == "" {
-		teamId = "dm"
-	}
-
-	a.Srv().Store.Channel().InvalidateChannelByName(teamId, name)
-}
-
-func (a *App) InvalidateCacheForChannelPosts(channelId string) {
-	a.Srv().Store.Channel().InvalidatePinnedPostCount(channelId)
-	a.Srv().Store.Post().InvalidateLastPostTimeCache(channelId)
-}
-
 func (a *App) InvalidateCacheForUser(userId string) {
 	a.InvalidateCacheForUserSkipClusterSend(userId)
 
-	a.Srv().Store.User().InvalidateProfilesInChannelCacheByUser(userId)
 	a.Srv().Store.User().InvalidateProfileCacheForUser(userId)
 
 	if a.Cluster() != nil {
@@ -275,38 +208,12 @@ func (a *App) InvalidateCacheForUser(userId string) {
 	}
 }
 
-func (a *App) InvalidateCacheForUserTeams(userId string) {
-	a.InvalidateCacheForUserTeamsSkipClusterSend(userId)
-	a.Srv().Store.Team().InvalidateAllTeamIdsForUser(userId)
-
-	if a.Cluster() != nil {
-		msg := &model.ClusterMessage{
-			Event:    model.CLUSTER_EVENT_INVALIDATE_CACHE_FOR_USER_TEAMS,
-			SendType: model.CLUSTER_SEND_BEST_EFFORT,
-			Data:     userId,
-		}
-		a.Cluster().SendClusterMessage(msg)
-	}
-}
-
 func (a *App) InvalidateCacheForUserSkipClusterSend(userId string) {
-	a.Srv().Store.Channel().InvalidateAllChannelMembersForUser(userId)
 
 	hub := a.GetHubForUserId(userId)
 	if hub != nil {
 		hub.InvalidateUser(userId)
 	}
-}
-
-func (a *App) InvalidateCacheForUserTeamsSkipClusterSend(userId string) {
-	hub := a.GetHubForUserId(userId)
-	if hub != nil {
-		hub.InvalidateUser(userId)
-	}
-}
-
-func (a *App) InvalidateCacheForWebhook(webhookId string) {
-	a.Srv().Store.Webhook().InvalidateWebhookCache(webhookId)
 }
 
 func (a *App) InvalidateWebConnSessionCacheForUser(userId string) {

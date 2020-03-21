@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/mattermost/gorp"
-	"github.com/mattermost/mattermost-server/v5/store"
+	"github.com/nhannv/quiz/v5/store"
 )
 
 /*type SqlStore struct {
@@ -69,41 +69,23 @@ type SqlStore interface {
 	Close()
 	LockToMaster()
 	UnlockFromMaster()
-	School() store.SchoolStore
-	Kid() store.KidStore
-	Schedule() store.ScheduleStore
-	Menu() store.MenuStore
-	Event() store.EventStore
-	Medicine() store.MedicineStore
-	Health() store.HealthStore
-	Team() store.TeamStore
-	Channel() store.ChannelStore
-	Post() store.PostStore
 	User() store.UserStore
-	Bot() store.BotStore
-	Audit() store.AuditStore
 	ClusterDiscovery() store.ClusterDiscoveryStore
-	Compliance() store.ComplianceStore
 	Session() store.SessionStore
 	OAuth() store.OAuthStore
 	System() store.SystemStore
-	Webhook() store.WebhookStore
-	Command() store.CommandStore
-	CommandWebhook() store.CommandWebhookStore
 	Preference() store.PreferenceStore
 	License() store.LicenseStore
 	Token() store.TokenStore
 	Emoji() store.EmojiStore
+	Audit() store.AuditStore
 	Status() store.StatusStore
 	FileInfo() store.FileInfoStore
 	Reaction() store.ReactionStore
 	Job() store.JobStore
-	Plugin() store.PluginStore
 	UserAccessToken() store.UserAccessTokenStore
 	Role() store.RoleStore
 	Scheme() store.SchemeStore
-	TermsOfService() store.TermsOfServiceStore
-	UserTermsOfService() store.UserTermsOfServiceStore
 	LinkMetadata() store.LinkMetadataStore
 	getQueryBuilder() sq.StatementBuilderType
 }

@@ -20,10 +20,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-server/v5/config"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/config"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 const (
@@ -286,16 +286,6 @@ func (a *App) regenerateClientConfig() {
 	clientConfig := config.GenerateClientConfig(a.Config(), a.DiagnosticId(), a.License())
 	limitedClientConfig := config.GenerateLimitedClientConfig(a.Config(), a.DiagnosticId(), a.License())
 
-	if clientConfig["EnableCustomTermsOfService"] == "true" {
-		termsOfService, err := a.GetLatestTermsOfService()
-		if err != nil {
-			mlog.Err(err)
-		} else {
-			clientConfig["CustomTermsOfServiceId"] = termsOfService.Id
-			limitedClientConfig["CustomTermsOfServiceId"] = termsOfService.Id
-		}
-	}
-
 	if key := a.AsymmetricSigningKey(); key != nil {
 		der, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		clientConfig["AsymmetricSigningPublicKey"] = base64.StdEncoding.EncodeToString(der)
@@ -331,7 +321,6 @@ func (a *App) ClientConfigWithComputed() map[string]string {
 	// These properties are not configurable, but nevertheless represent configuration expected
 	// by the client.
 	respCfg["NoAccounts"] = strconv.FormatBool(a.IsFirstUserAccount())
-	respCfg["MaxPostSize"] = strconv.Itoa(a.MaxPostSize())
 	respCfg["InstallationDate"] = ""
 	if installationDate, err := a.getSystemInstallDate(); err == nil {
 		respCfg["InstallationDate"] = strconv.FormatInt(installationDate, 10)

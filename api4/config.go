@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/mattermost/mattermost-server/v5/config"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/config"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 func (api *API) InitConfig() {
@@ -100,8 +100,6 @@ func updateConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 		c.Err = err
 		return
 	}
-
-	c.LogAudit("updateConfig")
 
 	cfg = c.App.GetSanitizedConfig()
 

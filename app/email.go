@@ -4,12 +4,10 @@
 package app
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/url"
 	"path"
-	"strings"
 
 	"net/http"
 
@@ -18,10 +16,9 @@ import (
 	"github.com/throttled/throttled"
 	"github.com/throttled/throttled/store/memstore"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/mailservice"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/mailservice"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 const (
@@ -299,168 +296,6 @@ func (a *App) SendMfaChangeEmail(email string, activated bool, locale, siteURL s
 	}
 
 	return nil
-}
-
-func (a *App) SendInviteEmails(team *model.Team, senderName string, senderUserId string, invites []string, siteURL string) {
-	if a.Srv().EmailRateLimiter == nil {
-		a.Log().Error("Email invite not sent, rate limiting could not be setup.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id))
-		return
-	}
-	rateLimited, result, err := a.Srv().EmailRateLimiter.RateLimit(senderUserId, len(invites))
-	if err != nil {
-		a.Log().Error("Error rate limiting invite email.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id), mlog.Err(err))
-		return
-	}
-
-	if rateLimited {
-		a.Log().Error("Invite emails rate limited.",
-			mlog.String("user_id", senderUserId),
-			mlog.String("team_id", team.Id),
-			mlog.String("retry_after", result.RetryAfter.String()),
-			mlog.Err(err))
-		return
-	}
-
-	for _, invite := range invites {
-		if len(invite) > 0 {
-			subject := utils.T("api.templates.invite_subject",
-				map[string]interface{}{"SenderName": senderName,
-					"TeamDisplayName": team.DisplayName,
-					"SiteName":        a.ClientConfig()["SiteName"]})
-
-			bodyPage := a.NewEmailTemplate("invite_body", model.DEFAULT_LOCALE)
-			bodyPage.Props["SiteURL"] = siteURL
-			bodyPage.Props["Title"] = utils.T("api.templates.invite_body.title")
-			bodyPage.Html["Info"] = utils.TranslateAsHtml(utils.T, "api.templates.invite_body.info",
-				map[string]interface{}{"SenderName": senderName, "TeamDisplayName": team.DisplayName})
-			bodyPage.Props["Button"] = utils.T("api.templates.invite_body.button")
-			bodyPage.Html["ExtraInfo"] = utils.TranslateAsHtml(utils.T, "api.templates.invite_body.extra_info",
-				map[string]interface{}{"TeamDisplayName": team.DisplayName})
-			bodyPage.Props["TeamURL"] = siteURL + "/" + team.Name
-
-			token := model.NewToken(
-				TOKEN_TYPE_TEAM_INVITATION,
-				model.MapToJson(map[string]string{"teamId": team.Id, "email": invite}),
-			)
-
-			props := make(map[string]string)
-			props["email"] = invite
-			props["display_name"] = team.DisplayName
-			props["name"] = team.Name
-			data := model.MapToJson(props)
-
-			if err := a.Srv().Store.Token().Save(token); err != nil {
-				mlog.Error("Failed to send invite email successfully ", mlog.Err(err))
-				continue
-			}
-			bodyPage.Props["Link"] = fmt.Sprintf("%s/signup_user_complete/?d=%s&t=%s", siteURL, url.QueryEscape(data), url.QueryEscape(token.Token))
-
-			if err := a.SendMail(invite, subject, bodyPage.Render()); err != nil {
-				mlog.Error("Failed to send invite email successfully ", mlog.Err(err))
-			}
-		}
-	}
-}
-
-func (a *App) SendGuestInviteEmails(team *model.Team, channels []*model.Channel, senderName string, senderUserId string, invites []string, siteURL string, message string) {
-	if a.Srv().EmailRateLimiter == nil {
-		a.Log().Error("Email invite not sent, rate limiting could not be setup.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id))
-		return
-	}
-	rateLimited, result, err := a.Srv().EmailRateLimiter.RateLimit(senderUserId, len(invites))
-	if err != nil {
-		a.Log().Error("Error rate limiting invite email.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id), mlog.Err(err))
-		return
-	}
-
-	sender, appErr := a.GetUser(senderUserId)
-	if appErr != nil {
-		a.Log().Error("Email invite not sent, unable to find the sender user.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id), mlog.Err(appErr))
-		return
-	}
-
-	senderProfileImage, _, appErr := a.GetProfileImage(sender)
-	if appErr != nil {
-		a.Log().Warn("Unable to get the sender user profile image.", mlog.String("user_id", senderUserId), mlog.String("team_id", team.Id), mlog.Err(appErr))
-	}
-
-	if rateLimited {
-		a.Log().Error("Invite emails rate limited.",
-			mlog.String("user_id", senderUserId),
-			mlog.String("team_id", team.Id),
-			mlog.String("retry_after", result.RetryAfter.String()),
-			mlog.Err(err))
-		return
-	}
-
-	for _, invite := range invites {
-		if len(invite) > 0 {
-			subject := utils.T("api.templates.invite_guest_subject",
-				map[string]interface{}{"SenderName": senderName,
-					"TeamDisplayName": team.DisplayName,
-					"SiteName":        a.ClientConfig()["SiteName"]})
-
-			bodyPage := a.NewEmailTemplate("invite_body", model.DEFAULT_LOCALE)
-			bodyPage.Props["SiteURL"] = siteURL
-			bodyPage.Props["Title"] = utils.T("api.templates.invite_body.title")
-			bodyPage.Html["Info"] = utils.TranslateAsHtml(utils.T, "api.templates.invite_body_guest.info",
-				map[string]interface{}{"SenderName": senderName, "TeamDisplayName": team.DisplayName})
-			bodyPage.Props["Button"] = utils.T("api.templates.invite_body.button")
-			bodyPage.Props["SenderName"] = senderName
-			bodyPage.Props["SenderId"] = senderUserId
-			bodyPage.Props["Message"] = ""
-			if message != "" {
-				bodyPage.Props["Message"] = message
-			}
-			bodyPage.Html["ExtraInfo"] = utils.TranslateAsHtml(utils.T, "api.templates.invite_body.extra_info",
-				map[string]interface{}{"TeamDisplayName": team.DisplayName})
-			bodyPage.Props["TeamURL"] = siteURL + "/" + team.Name
-
-			channelIds := []string{}
-			for _, channel := range channels {
-				channelIds = append(channelIds, channel.Id)
-			}
-
-			token := model.NewToken(
-				TOKEN_TYPE_GUEST_INVITATION,
-				model.MapToJson(map[string]string{
-					"teamId":   team.Id,
-					"channels": strings.Join(channelIds, " "),
-					"email":    invite,
-					"guest":    "true",
-				}),
-			)
-
-			props := make(map[string]string)
-			props["email"] = invite
-			props["display_name"] = team.DisplayName
-			props["name"] = team.Name
-			data := model.MapToJson(props)
-
-			if err := a.Srv().Store.Token().Save(token); err != nil {
-				mlog.Error("Failed to send invite email successfully ", mlog.Err(err))
-				continue
-			}
-			bodyPage.Props["Link"] = fmt.Sprintf("%s/signup_user_complete/?d=%s&t=%s", siteURL, url.QueryEscape(data), url.QueryEscape(token.Token))
-
-			if !*a.Config().EmailSettings.SendEmailNotifications {
-				mlog.Info("sending invitation ", mlog.String("to", invite), mlog.String("link", bodyPage.Props["Link"].(string)))
-			}
-
-			embeddedFiles := make(map[string]io.Reader)
-			if message != "" {
-				if senderProfileImage != nil {
-					embeddedFiles = map[string]io.Reader{
-						"user-avatar.png": bytes.NewReader(senderProfileImage),
-					}
-				}
-			}
-
-			if err := a.SendMailWithEmbeddedFiles(invite, subject, bodyPage.Render(), embeddedFiles); err != nil {
-				mlog.Error("Failed to send invite email successfully", mlog.Err(err))
-			}
-		}
-	}
 }
 
 func (a *App) NewEmailTemplate(name, locale string) *utils.HTMLTemplate {

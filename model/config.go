@@ -1578,6 +1578,22 @@ func (s *SchoolSettings) SetDefaults() {
 	}
 }
 
+type BranchSettings struct {
+	MaxClassesPerBranch                                        *int64
+	MaxNotificationsPerClass                                *int64
+}
+
+func (s *BranchSettings) SetDefaults() {
+
+	if s.MaxClassesPerBranch == nil {
+		s.MaxClassesPerBranch = NewInt64(50)
+	}
+
+	if s.MaxNotificationsPerClass == nil {
+		s.MaxNotificationsPerClass = NewInt64(1000)
+	}
+}
+
 type TeamSettings struct {
 	SiteName                                                  *string
 	MaxUsersPerTeam                                           *int
@@ -2572,6 +2588,7 @@ type ConfigFunc func() *Config
 type Config struct {
 	ServiceSettings         ServiceSettings
 	TeamSettings            TeamSettings
+	BranchSettings          BranchSettings
 	ClientRequirements      ClientRequirements
 	SqlSettings             SqlSettings
 	LogSettings             LogSettings
@@ -2667,6 +2684,7 @@ func (o *Config) SetDefaults() {
 	o.ServiceSettings.SetDefaults(isUpdate)
 	o.PasswordSettings.SetDefaults()
 	o.TeamSettings.SetDefaults()
+	o.BranchSettings.SetDefaults()
 	o.MetricsSettings.SetDefaults()
 	o.ExperimentalSettings.SetDefaults()
 	o.SupportSettings.SetDefaults()

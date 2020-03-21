@@ -37,7 +37,7 @@ else
 	BUILD_ENTERPRISE_READY = false
 	BUILD_TYPE_NAME = team
 endif
-BUILD_WEBAPP_DIR ?= ../mattermost-webapp
+BUILD_WEBAPP_DIR ?= ../quiz-webapp
 BUILD_CLIENT = false
 BUILD_HASH_CLIENT = independant
 ifneq ($(wildcard $(BUILD_WEBAPP_DIR)/.),)
@@ -58,11 +58,11 @@ GOFLAGS ?= $(GOFLAGS:) -mod=vendor
 export GOBIN ?= $(PWD)/bin
 GO=go
 DELVE=dlv
-LDFLAGS += -X "github.com/mattermost/mattermost-server/v5/model.BuildNumber=$(BUILD_NUMBER)"
-LDFLAGS += -X "github.com/mattermost/mattermost-server/v5/model.BuildDate=$(BUILD_DATE)"
-LDFLAGS += -X "github.com/mattermost/mattermost-server/v5/model.BuildHash=$(BUILD_HASH)"
-LDFLAGS += -X "github.com/mattermost/mattermost-server/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)"
-LDFLAGS += -X "github.com/mattermost/mattermost-server/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)"
+LDFLAGS += -X "github.com/nhannv/quiz/v5/model.BuildNumber=$(BUILD_NUMBER)"
+LDFLAGS += -X "github.com/nhannv/quiz/v5/model.BuildDate=$(BUILD_DATE)"
+LDFLAGS += -X "github.com/nhannv/quiz/v5/model.BuildHash=$(BUILD_HASH)"
+LDFLAGS += -X "github.com/nhannv/quiz/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)"
+LDFLAGS += -X "github.com/nhannv/quiz/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)"
 GO_MAJOR_VERSION = $(shell $(GO) version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f1)
 GO_MINOR_VERSION = $(shell $(GO) version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
 MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
@@ -88,17 +88,17 @@ TESTFLAGSEE ?= -short
 TE_PACKAGES=$(shell $(GO) list ./...)
 
 # Plugins Packages
-PLUGIN_PACKAGES?=mattermost-plugin-zoom-v1.3.0
-PLUGIN_PACKAGES += mattermost-plugin-autolink-v1.1.2
-PLUGIN_PACKAGES += mattermost-plugin-nps-v1.0.3
-PLUGIN_PACKAGES += mattermost-plugin-custom-attributes-v1.0.2
-PLUGIN_PACKAGES += mattermost-plugin-github-v0.11.0
-PLUGIN_PACKAGES += mattermost-plugin-welcomebot-v1.1.1
-PLUGIN_PACKAGES += mattermost-plugin-aws-SNS-v1.0.2
-PLUGIN_PACKAGES += mattermost-plugin-antivirus-v0.1.2
-PLUGIN_PACKAGES += mattermost-plugin-jira-v2.3.2
-PLUGIN_PACKAGES += mattermost-plugin-gitlab-v1.0.1
-PLUGIN_PACKAGES += mattermost-plugin-jenkins-v1.0.0
+PLUGIN_PACKAGES?=quiz-plugin-zoom-v1.3.0
+PLUGIN_PACKAGES += quiz-plugin-autolink-v1.1.2
+PLUGIN_PACKAGES += quiz-plugin-nps-v1.0.3
+PLUGIN_PACKAGES += quiz-plugin-custom-attributes-v1.0.2
+PLUGIN_PACKAGES += quiz-plugin-github-v0.11.0
+PLUGIN_PACKAGES += quiz-plugin-welcomebot-v1.1.1
+PLUGIN_PACKAGES += quiz-plugin-aws-SNS-v1.0.2
+PLUGIN_PACKAGES += quiz-plugin-antivirus-v0.1.2
+PLUGIN_PACKAGES += quiz-plugin-jira-v2.3.2
+PLUGIN_PACKAGES += quiz-plugin-gitlab-v1.0.1
+PLUGIN_PACKAGES += quiz-plugin-jenkins-v1.0.0
 
 
 # Prepares the enterprise build if exists. The IGNORE stuff is a hack to get the Makefile to execute the commands outside a target
@@ -207,7 +207,7 @@ app-layers: ## Extract interface from App struct
 	$(GOBIN)/struct2interface -f "app" -o "app/app_iface.go" -p "app" -s "App" -i "AppIface" -t ./app/layer_generators/app_iface.go.tmpl
 
 i18n-extract: ## Extract strings for translation from the source code
-	env GO111MODULE=off $(GO) get -u github.com/mattermost/mattermost-utilities/mmgotool
+	env GO111MODULE=off $(GO) get -u github.com/mattermost/quiz-utilities/mmgotool
 	$(GOBIN)/mmgotool i18n extract
 
 store-mocks: ## Creates mock files.
@@ -341,8 +341,8 @@ validate-go-version: ## Validates the installed version of go against Mattermost
 		exit 1; \
 	fi
 
-run-server: prepackaged-binaries validate-go-version start-docker ## Starts the server.
-	@echo Running mattermost for development
+run-server: prepackaged-binaries validate-go-version # start-docker ## Starts the server.
+	@echo Running quiz for development
 
 	mkdir -p $(BUILD_WEBAPP_DIR)/dist/files
 	$(GO) run $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PLATFORM_FILES) --disableconfigwatch 2>&1 | \
@@ -351,20 +351,20 @@ run-server: prepackaged-binaries validate-go-version start-docker ## Starts the 
 debug-server: start-docker ## Compile and start server using delve.
 	mkdir -p $(BUILD_WEBAPP_DIR)/dist/files
 	$(DELVE) debug $(PLATFORM_FILES) --build-flags="-ldflags '\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildNumber=$(BUILD_NUMBER)\
-		-X \"github.com/mattermost/mattermost-server/v5/model.BuildDate=$(BUILD_DATE)\"\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildHash=$(BUILD_HASH)\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)'"
+		-X github.com/nhannv/quiz/v5/model.BuildNumber=$(BUILD_NUMBER)\
+		-X \"github.com/nhannv/quiz/v5/model.BuildDate=$(BUILD_DATE)\"\
+		-X github.com/nhannv/quiz/v5/model.BuildHash=$(BUILD_HASH)\
+		-X github.com/nhannv/quiz/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)\
+		-X github.com/nhannv/quiz/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)'"
 
 debug-server-headless: start-docker ## Debug server from within an IDE like VSCode or IntelliJ.
 	mkdir -p $(BUILD_WEBAPP_DIR)/dist/files
 	$(DELVE) debug --headless --listen=:2345 --api-version=2 --accept-multiclient $(PLATFORM_FILES) --build-flags="-ldflags '\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildNumber=$(BUILD_NUMBER)\
-		-X \"github.com/mattermost/mattermost-server/v5/model.BuildDate=$(BUILD_DATE)\"\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildHash=$(BUILD_HASH)\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)\
-		-X github.com/mattermost/mattermost-server/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)'"
+		-X github.com/nhannv/quiz/v5/model.BuildNumber=$(BUILD_NUMBER)\
+		-X \"github.com/nhannv/quiz/v5/model.BuildDate=$(BUILD_DATE)\"\
+		-X github.com/nhannv/quiz/v5/model.BuildHash=$(BUILD_HASH)\
+		-X github.com/nhannv/quiz/v5/model.BuildHashEnterprise=$(BUILD_HASH_ENTERPRISE)\
+		-X github.com/nhannv/quiz/v5/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)'"
 
 run-cli: start-docker ## Runs CLI.
 	@echo Running mattermost for development
@@ -491,15 +491,15 @@ update-dependencies: ## Uses go get -u to update all the dependencies while hold
 	$(GO) mod vendor
 
 vet: ## Run mattermost go vet specific checks
-	@if ! [ -x "$$(command -v $(GOBIN)/mattermost-govet)" ]; then \
-		echo "mattermost-govet is not installed. Please install it executing \"GO111MODULE=off GOBIN=$(PWD)/bin go get -u github.com/mattermost/mattermost-govet\""; \
+	@if ! [ -x "$$(command -v $(GOBIN)/quiz-govet)" ]; then \
+		echo "quiz-govet is not installed. Please install it executing \"GO111MODULE=off GOBIN=$(PWD)/bin go get -u github.com/mattermost/quiz-govet\""; \
 		exit 1; \
 	fi; \
 
-	$(GO) vet -vettool=$(GOBIN)/mattermost-govet -license -structuredLogging -inconsistentReceiverName -tFatal ./...
+	$(GO) vet -vettool=$(GOBIN)/quiz-govet -license -structuredLogging -inconsistentReceiverName -tFatal ./...
 ifeq ($(BUILD_ENTERPRISE_READY),true)
 ifneq ($(MM_NO_ENTERPRISE_LINT),true)
-	$(GO) vet -vettool=$(GOBIN)/mattermost-govet -enterpriseLicense -structuredLogging -tFatal ./enterprise/...
+	$(GO) vet -vettool=$(GOBIN)/quiz-govet -enterpriseLicense -structuredLogging -tFatal ./enterprise/...
 endif
 endif
 

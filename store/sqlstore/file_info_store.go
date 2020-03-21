@@ -10,11 +10,11 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 
-	"github.com/mattermost/mattermost-server/v5/einterfaces"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/cache"
-	"github.com/mattermost/mattermost-server/v5/services/cache/lru"
-	"github.com/mattermost/mattermost-server/v5/store"
+	"github.com/nhannv/quiz/v5/einterfaces"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/cache"
+	"github.com/nhannv/quiz/v5/services/cache/lru"
+	"github.com/nhannv/quiz/v5/store"
 )
 
 type SqlFileInfoStore struct {

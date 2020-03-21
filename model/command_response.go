@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/utils/jsonutils"
+	"github.com/nhannv/quiz/v5/utils/jsonutils"
 )
 
 const (
@@ -28,7 +28,6 @@ type CommandResponse struct {
 	GotoLocation     string             `json:"goto_location"`
 	TriggerId        string             `json:"trigger_id"`
 	SkipSlackParsing bool               `json:"skip_slack_parsing"` // Set to `true` to skip the Slack-compatibility handling of Text.
-	Attachments      []*SlackAttachment `json:"attachments"`
 	ExtraResponses   []*CommandResponse `json:"extra_responses"`
 }
 
@@ -63,14 +62,6 @@ func CommandResponseFromJson(data io.Reader) (*CommandResponse, error) {
 	err = json.Unmarshal(b, &o)
 	if err != nil {
 		return nil, jsonutils.HumanizeJsonError(err, b)
-	}
-
-	o.Attachments = StringifySlackFieldValue(o.Attachments)
-
-	if o.ExtraResponses != nil {
-		for _, resp := range o.ExtraResponses {
-			resp.Attachments = StringifySlackFieldValue(resp.Attachments)
-		}
 	}
 
 	return &o, nil

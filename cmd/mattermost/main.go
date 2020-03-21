@@ -6,13 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/mattermost/mattermost-server/v5/cmd/mattermost/commands"
-
-	// Plugins
-	_ "github.com/mattermost/mattermost-server/v5/model/gitlab"
-
-	// Enterprise Imports
-	_ "github.com/mattermost/mattermost-server/v5/imports"
+	"github.com/nhannv/quiz/v5/cmd/mattermost/commands"
 
 	// Enterprise Deps
 	_ "github.com/gorilla/handlers"

@@ -11,7 +11,7 @@ import (
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html/charset"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
+	"github.com/nhannv/quiz/v5/mlog"
 )
 
 const MaxOpenGraphResponseSize = 1024 * 1024 * 50
@@ -37,11 +37,6 @@ func (a *App) parseOpenGraphMetadata(requestURL string, body io.Reader, contentT
 	makeOpenGraphURLsAbsolute(og, requestURL)
 
 	openGraphDecodeHtmlEntities(og)
-
-	// If image proxy enabled modify open graph data to feed though proxy
-	if toProxyURL := a.ImageProxyAdder(); toProxyURL != nil {
-		og = openGraphDataWithProxyAddedToImageURLs(og, toProxyURL)
-	}
 
 	// The URL should be the link the user provided in their message, not a redirected one.
 	if og.URL != "" {

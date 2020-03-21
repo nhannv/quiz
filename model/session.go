@@ -28,20 +28,17 @@ const (
 )
 
 type Session struct {
-	Id             string          `json:"id"`
-	Token          string          `json:"token"`
-	CreateAt       int64           `json:"create_at"`
-	ExpiresAt      int64           `json:"expires_at"`
-	LastActivityAt int64           `json:"last_activity_at"`
-	UserId         string          `json:"user_id"`
-	DeviceId       string          `json:"device_id"`
-	SchoolId       string          `json:"school_id"`
-	Roles          string          `json:"roles"`
-	IsOAuth        bool            `json:"is_oauth"`
-	Props          StringMap       `json:"props"`
-	TeamMembers    []*TeamMember   `json:"team_members" db:"-"`
-	SchoolMembers  []*SchoolMember `json:"school_members" db:"-"`
-	KidGuardians   []*KidGuardian  `json:"kid_parents" db:"-"`
+	Id             string    `json:"id"`
+	Token          string    `json:"token"`
+	CreateAt       int64     `json:"create_at"`
+	ExpiresAt      int64     `json:"expires_at"`
+	LastActivityAt int64     `json:"last_activity_at"`
+	UserId         string    `json:"user_id"`
+	DeviceId       string    `json:"device_id"`
+	SchoolId       string    `json:"school_id"`
+	Roles          string    `json:"roles"`
+	IsOAuth        bool      `json:"is_oauth"`
+	Props          StringMap `json:"props"`
 }
 
 func (me *Session) DeepCopy() *Session {
@@ -49,14 +46,6 @@ func (me *Session) DeepCopy() *Session {
 
 	if me.Props != nil {
 		copySession.Props = CopyStringMap(me.Props)
-	}
-
-	if me.TeamMembers != nil {
-		copySession.TeamMembers = make([]*TeamMember, len(me.TeamMembers))
-		for index, tm := range me.TeamMembers {
-			copySession.TeamMembers[index] = new(TeamMember)
-			*copySession.TeamMembers[index] = *tm
-		}
 	}
 
 	return &copySession
@@ -122,36 +111,6 @@ func (me *Session) AddProp(key string, value string) {
 	}
 
 	me.Props[key] = value
-}
-
-func (me *Session) GetGuardianByKidId(kidId string) *KidGuardian {
-	for _, kid := range me.KidGuardians {
-		if kid.KidId == kidId {
-			return kid
-		}
-	}
-
-	return nil
-}
-
-func (me *Session) GetSchoolBySchoolId(schoolId string) *SchoolMember {
-	for _, school := range me.SchoolMembers {
-		if school.SchoolId == schoolId {
-			return school
-		}
-	}
-
-	return nil
-}
-
-func (me *Session) GetTeamByTeamId(teamId string) *TeamMember {
-	for _, team := range me.TeamMembers {
-		if team.TeamId == teamId {
-			return team
-		}
-	}
-
-	return nil
 }
 
 func (me *Session) IsMobileApp() bool {

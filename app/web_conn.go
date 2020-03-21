@@ -11,8 +11,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	goi18n "github.com/mattermost/go-i18n/i18n"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
 )
 
 const (
@@ -27,22 +27,20 @@ const (
 )
 
 type WebConn struct {
-	sessionExpiresAt          int64 // This should stay at the top for 64-bit alignment of 64-bit words accessed atomically
-	App                       *App
-	WebSocket                 *websocket.Conn
-	Send                      chan model.WebSocketMessage
-	sessionToken              atomic.Value
-	session                   atomic.Value
-	LastUserActivityAt        int64
-	UserId                    string
-	T                         goi18n.TranslateFunc
-	Locale                    string
-	AllChannelMembers         map[string]string
-	LastAllChannelMembersTime int64
-	Sequence                  int64
-	closeOnce                 sync.Once
-	endWritePump              chan struct{}
-	pumpFinished              chan struct{}
+	sessionExpiresAt   int64 // This should stay at the top for 64-bit alignment of 64-bit words accessed atomically
+	App                *App
+	WebSocket          *websocket.Conn
+	Send               chan model.WebSocketMessage
+	sessionToken       atomic.Value
+	session            atomic.Value
+	LastUserActivityAt int64
+	UserId             string
+	T                  goi18n.TranslateFunc
+	Locale             string
+	Sequence           int64
+	closeOnce          sync.Once
+	endWritePump       chan struct{}
+	pumpFinished       chan struct{}
 }
 
 func (a *App) NewWebConn(ws *websocket.Conn, session model.Session, t goi18n.TranslateFunc, locale string) *WebConn {
@@ -179,13 +177,11 @@ func (wc *WebConn) writePump() {
 			if len(wc.Send) >= SEND_SLOW_WARN {
 				// When the pump starts to get slow we'll drop non-critical messages
 				if msg.EventType() == model.WEBSOCKET_EVENT_TYPING ||
-					msg.EventType() == model.WEBSOCKET_EVENT_STATUS_CHANGE ||
-					msg.EventType() == model.WEBSOCKET_EVENT_CHANNEL_VIEWED {
+					msg.EventType() == model.WEBSOCKET_EVENT_STATUS_CHANGE {
 					mlog.Info(
 						"websocket.slow: dropping message",
 						mlog.String("user_id", wc.UserId),
 						mlog.String("type", msg.EventType()),
-						mlog.String("channel_id", evt.GetBroadcast().ChannelId),
 					)
 					skipSend = true
 				}
@@ -207,7 +203,6 @@ func (wc *WebConn) writePump() {
 							"websocket.full",
 							mlog.String("user_id", wc.UserId),
 							mlog.String("type", msg.EventType()),
-							mlog.String("channel_id", evt.GetBroadcast().ChannelId),
 							mlog.Int("size", len(msg.ToJson())),
 						)
 					} else {
@@ -264,8 +259,6 @@ func (wc *WebConn) writePump() {
 }
 
 func (wc *WebConn) InvalidateCache() {
-	wc.AllChannelMembers = nil
-	wc.LastAllChannelMembersTime = 0
 	wc.SetSession(nil)
 	wc.SetSessionExpiresAt(0)
 }
@@ -297,33 +290,6 @@ func (wc *WebConn) SendHello() {
 	msg := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_HELLO, "", "", wc.UserId, nil)
 	msg.Add("server_version", fmt.Sprintf("%v.%v.%v.%v", model.CurrentVersion, model.BuildNumber, wc.App.ClientConfigHash(), wc.App.License() != nil))
 	wc.Send <- msg
-}
-
-func (wc *WebConn) shouldSendEventToGuest(msg *model.WebSocketEvent) bool {
-	var userId string
-	var canSee bool
-
-	switch msg.EventType() {
-	case model.WEBSOCKET_EVENT_USER_UPDATED:
-		user, ok := msg.GetData()["user"].(*model.User)
-		if !ok {
-			mlog.Error("webhub.shouldSendEvent: user not found in message", mlog.Any("user", msg.GetData()["user"]))
-			return false
-		}
-		userId = user.Id
-	case model.WEBSOCKET_EVENT_NEW_USER:
-		userId = msg.GetData()["user_id"].(string)
-	default:
-		return true
-	}
-
-	canSee, err := wc.App.UserCanSeeOtherUser(wc.UserId, userId)
-	if err != nil {
-		mlog.Error("webhub.shouldSendEvent.", mlog.Err(err))
-		return false
-	}
-
-	return canSee
 }
 
 func (wc *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
@@ -366,53 +332,5 @@ func (wc *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
 		}
 	}
 
-	// Only report events to users who are in the channel for the event
-	if len(msg.GetBroadcast().ChannelId) > 0 {
-		if model.GetMillis()-wc.LastAllChannelMembersTime > WEBCONN_MEMBER_CACHE_TIME {
-			wc.AllChannelMembers = nil
-			wc.LastAllChannelMembersTime = 0
-		}
-
-		if wc.AllChannelMembers == nil {
-			result, err := wc.App.Srv().Store.Channel().GetAllChannelMembersForUser(wc.UserId, true, false)
-			if err != nil {
-				mlog.Error("webhub.shouldSendEvent.", mlog.Err(err))
-				return false
-			}
-			wc.AllChannelMembers = result
-			wc.LastAllChannelMembersTime = model.GetMillis()
-		}
-
-		if _, ok := wc.AllChannelMembers[msg.GetBroadcast().ChannelId]; ok {
-			return true
-		}
-		return false
-	}
-
-	// Only report events to users who are in the team for the event
-	if len(msg.GetBroadcast().TeamId) > 0 {
-		return wc.IsMemberOfTeam(msg.GetBroadcast().TeamId)
-	}
-
-	if wc.GetSession().Props[model.SESSION_PROP_IS_GUEST] == "true" {
-		return wc.shouldSendEventToGuest(msg)
-	}
-
 	return true
-}
-
-func (wc *WebConn) IsMemberOfTeam(teamId string) bool {
-	currentSession := wc.GetSession()
-
-	if currentSession == nil || len(currentSession.Token) == 0 {
-		session, err := wc.App.GetSession(wc.GetSessionToken())
-		if err != nil {
-			mlog.Error("Invalid session.", mlog.Err(err))
-			return false
-		}
-		wc.SetSession(session)
-		currentSession = session
-	}
-
-	return currentSession.GetTeamByTeamId(teamId) != nil
 }

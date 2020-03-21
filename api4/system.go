@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/cache/lru"
-	"github.com/mattermost/mattermost-server/v5/services/filesstore"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/cache/lru"
+	"github.com/nhannv/quiz/v5/services/filesstore"
 )
 
 const (
@@ -40,11 +40,7 @@ func (api *API) InitSystem() {
 	api.BaseRoutes.ApiRoot.Handle("/logs", api.ApiSessionRequired(getLogs)).Methods("GET")
 	api.BaseRoutes.ApiRoot.Handle("/logs", api.ApiHandler(postLog)).Methods("POST")
 
-	api.BaseRoutes.ApiRoot.Handle("/analytics/old", api.ApiSessionRequired(getAnalytics)).Methods("GET")
-
 	api.BaseRoutes.ApiRoot.Handle("/redirect_location", api.ApiSessionRequiredTrustRequester(getRedirectLocation)).Methods("GET")
-
-	api.BaseRoutes.ApiRoot.Handle("/notifications/ack", api.ApiSessionRequired(pushNotificationAck)).Methods("POST")
 
 	api.BaseRoutes.ApiRoot.Handle("/server_busy", api.ApiSessionRequired(setServerBusy)).Methods("POST")
 	api.BaseRoutes.ApiRoot.Handle("/server_busy", api.ApiSessionRequired(getServerBusyExpires)).Methods("GET")
@@ -287,33 +283,6 @@ func postLog(c *Context, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(model.MapToJson(m)))
 }
 
-func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
-	teamId := r.URL.Query().Get("team_id")
-
-	if name == "" {
-		name = "standard"
-	}
-
-	if !c.App.SessionHasPermissionTo(*c.App.Session(), model.PERMISSION_MANAGE_SYSTEM) {
-		c.SetPermissionError(model.PERMISSION_MANAGE_SYSTEM)
-		return
-	}
-
-	rows, err := c.App.GetAnalytics(name, teamId)
-	if err != nil {
-		c.Err = err
-		return
-	}
-
-	if rows == nil {
-		c.SetInvalidParam("name")
-		return
-	}
-
-	w.Write([]byte(rows.ToJson()))
-}
-
 func getSupportedTimezones(c *Context, w http.ResponseWriter, r *http.Request) {
 	supportedTimezones := c.App.Timezones().GetSupported()
 	if supportedTimezones == nil {
@@ -408,59 +377,6 @@ func getRedirectLocation(c *Context, w http.ResponseWriter, r *http.Request) {
 	m["location"] = location
 
 	w.Write([]byte(model.MapToJson(m)))
-}
-
-func pushNotificationAck(c *Context, w http.ResponseWriter, r *http.Request) {
-	ack, err := model.PushNotificationAckFromJson(r.Body)
-	if err != nil {
-		c.Err = model.NewAppError("pushNotificationAck",
-			"api.push_notifications_ack.message.parse.app_error",
-			nil,
-			err.Error(),
-			http.StatusBadRequest,
-		)
-		return
-	}
-
-	if !*c.App.Config().EmailSettings.SendPushNotifications {
-		c.Err = model.NewAppError("pushNotificationAck", "api.push_notification.disabled.app_error", nil, "", http.StatusNotImplemented)
-		return
-	}
-
-	err = c.App.SendAckToPushProxy(ack)
-	if ack.IsIdLoaded {
-		if err != nil {
-			// Log the error only, then continue to fetch notification message
-			c.App.NotificationsLog().Error("Notification ack not sent to push proxy",
-				mlog.String("ackId", ack.Id),
-				mlog.String("type", ack.NotificationType),
-				mlog.String("postId", ack.PostId),
-				mlog.String("status", err.Error()),
-			)
-		}
-
-		notificationInterface := c.App.Notification()
-
-		if notificationInterface == nil {
-			c.Err = model.NewAppError("pushNotificationAck", "api.system.id_loaded.not_available.app_error", nil, "", http.StatusFound)
-			return
-		}
-
-		msg, appError := notificationInterface.GetNotificationMessage(ack, c.App.Session().UserId)
-		if appError != nil {
-			c.Err = model.NewAppError("pushNotificationAck", "api.push_notification.id_loaded.fetch.app_error", nil, appError.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Write([]byte(msg.ToJson()))
-
-		return
-	} else if err != nil {
-		c.Err = model.NewAppError("pushNotificationAck", "api.push_notifications_ack.forward.app_error", nil, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	ReturnStatusOK(w)
 }
 
 func setServerBusy(c *Context, w http.ResponseWriter, r *http.Request) {

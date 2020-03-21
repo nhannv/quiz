@@ -68,7 +68,7 @@ Session.vim
 *~
 
 # Gogland project files
-mattermost-server.iml
+quiz.iml
 
 # Build files
 *bundle.js

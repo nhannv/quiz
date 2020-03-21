@@ -8,13 +8,13 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/mailservice"
-	"github.com/mattermost/mattermost-server/v5/store"
-	"github.com/mattermost/mattermost-server/v5/store/localcachelayer"
-	"github.com/mattermost/mattermost-server/v5/store/sqlstore"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/mailservice"
+	"github.com/nhannv/quiz/v5/store"
+	"github.com/nhannv/quiz/v5/store/localcachelayer"
+	"github.com/nhannv/quiz/v5/store/sqlstore"
+	"github.com/nhannv/quiz/v5/utils"
 	"github.com/pkg/errors"
 )
 
@@ -23,8 +23,6 @@ import (
 // Don't add anything new here, new initialization should be done in the server and
 // performed in the NewServer function.
 func (s *Server) RunOldAppInitialization() error {
-	s.FakeApp().CreatePushNotificationsHub()
-
 	if err := utils.InitTranslations(s.FakeApp().Config().LocalizationSettings); err != nil {
 		return errors.Wrapf(err, "unable to load Mattermost translation files")
 	}
@@ -73,7 +71,6 @@ func (s *Server) RunOldAppInitialization() error {
 	}
 
 	s.FakeApp().Srv().Store = s.FakeApp().Srv().newStore()
-	s.FakeApp().StartPushNotificationsHubWorkers()
 
 	s.initEnterprise()
 
@@ -104,10 +101,6 @@ func (s *Server) RunOldAppInitialization() error {
 		return errors.Wrap(err, "failed to parse SiteURL subpath")
 	}
 	s.FakeApp().Srv().Router = s.FakeApp().Srv().RootRouter.PathPrefix(subpath).Subrouter()
-	pluginsRoute := s.FakeApp().Srv().Router.PathPrefix("/plugins/{plugin_id:[A-Za-z0-9\\_\\-\\.]+}").Subrouter()
-	pluginsRoute.HandleFunc("", s.FakeApp().ServePluginRequest)
-	pluginsRoute.HandleFunc("/public/{public_file:.*}", s.FakeApp().ServePluginPublicRequest)
-	pluginsRoute.HandleFunc("/{anything:.*}", s.FakeApp().ServePluginRequest)
 
 	// If configured with a subpath, redirect 404s at the root back into the subpath.
 	if subpath != "/" {
@@ -143,24 +136,11 @@ func (s *Server) RunOldAppInitialization() error {
 
 	s.FakeApp().DoAppMigrations()
 
-	s.FakeApp().InitPostMetadata()
-
-	s.FakeApp().InitPlugins(*s.Config().PluginSettings.Directory, *s.Config().PluginSettings.ClientDirectory)
-	s.FakeApp().AddConfigListener(func(prevCfg, cfg *model.Config) {
-		if *cfg.PluginSettings.Enable {
-			s.FakeApp().InitPlugins(*cfg.PluginSettings.Directory, *s.Config().PluginSettings.ClientDirectory)
-		} else {
-			s.FakeApp().ShutDownPlugins()
-		}
-	})
-
 	return nil
 }
 
 func (s *Server) RunOldAppShutdown() {
 	s.FakeApp().HubStop()
-	s.FakeApp().StopPushNotificationsHubWorkers()
-	s.FakeApp().ShutDownPlugins()
 	s.FakeApp().RemoveLicenseListener(s.licenseListenerId)
 	s.RemoveClusterLeaderChangedListener(s.clusterLeaderListenerId)
 }

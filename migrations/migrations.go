@@ -4,10 +4,10 @@
 package migrations
 
 import (
-	"github.com/mattermost/mattermost-server/v5/app"
-	tjobs "github.com/mattermost/mattermost-server/v5/jobs/interfaces"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/store"
+	"github.com/nhannv/quiz/v5/app"
+	tjobs "github.com/nhannv/quiz/v5/jobs/interfaces"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/store"
 )
 
 const (

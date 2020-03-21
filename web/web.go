@@ -11,11 +11,11 @@ import (
 	"github.com/avct/uasurfer"
 	"github.com/gorilla/mux"
 
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/configservice"
-	"github.com/mattermost/mattermost-server/v5/utils"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/configservice"
+	"github.com/nhannv/quiz/v5/utils"
 )
 
 type Web struct {
@@ -33,9 +33,6 @@ func New(config configservice.ConfigService, globalOptions app.AppOptionCreator,
 		MainRouter:          root,
 	}
 
-	web.InitOAuth()
-	web.InitWebhooks()
-	web.InitSaml()
 	web.InitStatic()
 
 	return web

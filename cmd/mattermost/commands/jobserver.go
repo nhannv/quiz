@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/mattermost/viper"
+	"github.com/nhannv/quiz/v5/mlog"
 	"github.com/spf13/cobra"
 )
 

@@ -4,10 +4,10 @@
 package commands
 
 import (
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/utils"
 	"github.com/mattermost/viper"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,6 @@ func InitDBCommandContextCobra(command *cobra.Command) (*app.App, error) {
 		panic(err)
 	}
 
-	a.InitPlugins(*a.Config().PluginSettings.Directory, *a.Config().PluginSettings.ClientDirectory)
 	a.DoAppMigrations()
 
 	return a, nil

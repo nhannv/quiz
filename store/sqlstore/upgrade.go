@@ -12,9 +12,9 @@ import (
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-server/v5/mlog"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/services/timezones"
+	"github.com/nhannv/quiz/v5/mlog"
+	"github.com/nhannv/quiz/v5/model"
+	"github.com/nhannv/quiz/v5/services/timezones"
 )
 
 const (
@@ -161,7 +161,6 @@ func upgradeDatabase(sqlStore SqlStore, currentModelVersionString string) error 
 	upgradeDatabaseToVersion58(sqlStore)
 	upgradeDatabaseToVersion59(sqlStore)
 	upgradeDatabaseToVersion510(sqlStore)
-	upgradeDatabaseToVersion511(sqlStore)
 	upgradeDatabaseToVersion512(sqlStore)
 	upgradeDatabaseToVersion513(sqlStore)
 	upgradeDatabaseToVersion514(sqlStore)
@@ -568,11 +567,6 @@ func upgradeDatabaseToVersion54(sqlStore SqlStore) {
 	if shouldPerformUpgrade(sqlStore, VERSION_5_3_0, VERSION_5_4_0) {
 		sqlStore.AlterColumnTypeIfExists("OutgoingWebhooks", "Description", "varchar(500)", "varchar(500)")
 		sqlStore.AlterColumnTypeIfExists("IncomingWebhooks", "Description", "varchar(500)", "varchar(500)")
-		if err := sqlStore.Channel().MigratePublicChannels(); err != nil {
-			mlog.Critical("Failed to migrate PublicChannels table", mlog.Err(err))
-			time.Sleep(time.Second)
-			os.Exit(EXIT_GENERIC_FAILURE)
-		}
 		saveSchemaVersion(sqlStore, VERSION_5_4_0)
 	}
 }
@@ -644,25 +638,6 @@ func upgradeDatabaseToVersion510(sqlStore SqlStore) {
 		sqlStore.CreateIndexIfNotExists("idx_groupchannels_channelid", "GroupChannels", "ChannelId")
 
 		saveSchemaVersion(sqlStore, VERSION_5_10_0)
-	}
-}
-
-func upgradeDatabaseToVersion511(sqlStore SqlStore) {
-	if shouldPerformUpgrade(sqlStore, VERSION_5_10_0, VERSION_5_11_0) {
-		// Enforce all teams have an InviteID set
-		var teams []*model.Team
-		if _, err := sqlStore.GetReplica().Select(&teams, "SELECT * FROM Teams WHERE InviteId = ''"); err != nil {
-			mlog.Error("Error fetching Teams without InviteID", mlog.Err(err))
-		} else {
-			for _, team := range teams {
-				team.InviteId = model.NewId()
-				if _, err := sqlStore.Team().Update(team); err != nil {
-					mlog.Error("Error updating Team InviteIDs", mlog.String("team_id", team.Id), mlog.Err(err))
-				}
-			}
-		}
-
-		saveSchemaVersion(sqlStore, VERSION_5_11_0)
 	}
 }
 

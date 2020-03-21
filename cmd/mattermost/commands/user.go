@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/app"
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/nhannv/quiz/v5/app"
+	"github.com/nhannv/quiz/v5/model"
 	"github.com/spf13/cobra"
 )
 
@@ -44,27 +44,6 @@ var UserCreateCmd = &cobra.Command{
 	Long:    "Create a user",
 	Example: `  user create --email user@example.com --username userexample --password Password1`,
 	RunE:    userCreateCmdF,
-}
-
-var UserConvertCmd = &cobra.Command{
-	Use:   "convert [emails, usernames, userIds] --bot",
-	Short: "Convert users to bots, or a bot to a user",
-	Long:  "Convert users to bots, or a bot to a user",
-	Example: `  user convert user@example.com anotherUser --bot
-	user convert botusername --email new.email@email.com --password password --user`,
-	Args: cobra.MinimumNArgs(1),
-	RunE: userConvertCmdF,
-}
-
-var UserInviteCmd = &cobra.Command{
-	Use:   "invite [email] [teams]",
-	Short: "Send user an email invite to a team.",
-	Long: `Send user an email invite to a team.
-You can invite a user to multiple teams by listing them.
-You can specify teams by name or ID.`,
-	Example: `  user invite user@example.com myteam
-  user invite user@example.com myteam1 myteam2`,
-	RunE: userInviteCmdF,
 }
 
 var ResetUserPasswordCmd = &cobra.Command{
@@ -172,17 +151,6 @@ func init() {
 	UserCreateCmd.Flags().String("locale", "", "Optional. The locale (ex: en, fr) for the new user account.")
 	UserCreateCmd.Flags().Bool("system_admin", false, "Optional. If supplied, the new user will be a system administrator. Defaults to false.")
 
-	UserConvertCmd.Flags().Bool("bot", false, "If supplied, convert users to bots.")
-	UserConvertCmd.Flags().Bool("user", false, "If supplied, convert a bot to a user.")
-	UserConvertCmd.Flags().String("password", "", "The password for converted new user account. Required when \"user\" flag is set.")
-	UserConvertCmd.Flags().String("username", "", "Username for the converted user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().String("email", "", "The email address for the converted user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().String("nickname", "", "The nickname for the converted user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().String("firstname", "", "The first name for the converted user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().String("lastname", "", "The last name for the converted user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().String("locale", "", "The locale (ex: en, fr) for converted new user account. Ignored when \"user\" flag is missing.")
-	UserConvertCmd.Flags().Bool("system_admin", false, "If supplied, the converted user will be a system administrator. Defaults to false. Ignored when \"user\" flag is missing.")
-
 	DeleteUserCmd.Flags().Bool("confirm", false, "Confirm you really want to delete the user and a DB backup has been performed.")
 
 	DeleteAllUsersCmd.Flags().Bool("confirm", false, "Confirm you really want to delete the user and a DB backup has been performed.")
@@ -255,8 +223,6 @@ Global Flags:
 		UserActivateCmd,
 		UserDeactivateCmd,
 		UserCreateCmd,
-		UserConvertCmd,
-		UserInviteCmd,
 		ResetUserPasswordCmd,
 		updateUserEmailCmd,
 		ResetUserMfaCmd,
@@ -391,24 +357,6 @@ func userCreateCmdF(command *cobra.Command, args []string) error {
 	return nil
 }
 
-func usersToBots(args []string, a *app.App) {
-	users := getUsersFromUserArgs(a, args)
-	for i, user := range users {
-		if user == nil {
-			CommandPrintErrorln(fmt.Errorf("Unable to find user \"%s\"", args[i]))
-			continue
-		}
-
-		bot, err := a.ConvertUserToBot(user)
-		if err != nil {
-			CommandPrintErrorln(err.Error())
-			continue
-		}
-
-		CommandPrettyPrintln(fmt.Sprintf("User %s is converted to bot successfully", bot.UserId))
-	}
-}
-
 func getUpdatedPassword(command *cobra.Command, a *app.App, user *model.User) (string, error) {
 	password, err := command.Flags().GetString("password")
 	if err != nil {
@@ -466,145 +414,6 @@ func getUpdatedUserModel(command *cobra.Command, a *app.App, user *model.User) (
 	}
 
 	return user, nil
-}
-
-func botToUser(command *cobra.Command, args []string, a *app.App) error {
-	if len(args) != 1 {
-		return errors.New("Expect 1 argument. See help text for more details.")
-	}
-
-	user := getUserFromUserArg(a, args[0])
-	if user == nil {
-		return errors.New("Unable to find bot.")
-	}
-
-	_, appErr := a.GetBot(user.Id, false)
-	if appErr != nil {
-		return fmt.Errorf("Unable to find bot. Error: %s", appErr.Error())
-	}
-
-	password, err := getUpdatedPassword(command, a, user)
-	if err != nil {
-		return err
-	}
-
-	user, err = getUpdatedUserModel(command, a, user)
-	if err != nil {
-		return err
-	}
-
-	user, appErr = a.UpdateUser(user, false)
-	if appErr != nil {
-		return fmt.Errorf("Unable to update user. Error: %s" + appErr.Error())
-	}
-
-	appErr = a.UpdatePassword(user, password)
-	if appErr != nil {
-		return fmt.Errorf("Unable to update password. Error: %s", appErr.Error())
-	}
-
-	systemAdmin, _ := command.Flags().GetBool("system_admin")
-	if systemAdmin && !user.IsInRole(model.SYSTEM_ADMIN_ROLE_ID) {
-		if _, appErr = a.UpdateUserRoles(
-			user.Id,
-			fmt.Sprintf("%s %s", user.Roles, model.SYSTEM_ADMIN_ROLE_ID),
-			false); appErr != nil {
-			return fmt.Errorf("Unable to make user system admin. Error: %s" + appErr.Error())
-		}
-	}
-
-	appErr = a.Srv().Store.Bot().PermanentDelete(user.Id)
-	if appErr != nil {
-		return fmt.Errorf("Unable to delete bot. Error: %s", appErr.Error())
-	}
-
-	CommandPrettyPrintln("id: " + user.Id)
-	CommandPrettyPrintln("username: " + user.Username)
-	CommandPrettyPrintln("email: " + user.Email)
-	CommandPrettyPrintln("nickname: " + user.Nickname)
-	CommandPrettyPrintln("first_name: " + user.FirstName)
-	CommandPrettyPrintln("last_name: " + user.LastName)
-	CommandPrettyPrintln("roles: " + user.Roles)
-	CommandPrettyPrintln("locale: " + user.Locale)
-	return nil
-}
-
-func userConvertCmdF(command *cobra.Command, args []string) error {
-	a, err := InitDBCommandContextCobra(command)
-	if err != nil {
-		return err
-	}
-	defer a.Shutdown()
-
-	toBot, err := command.Flags().GetBool("bot")
-	if err != nil {
-		return errors.New("Invalid command. See help text for details.")
-	}
-
-	toUser, err := command.Flags().GetBool("user")
-	if err != nil {
-		return errors.New("Invalid command. See help text for details.")
-	}
-
-	if !(toUser || toBot) {
-		return errors.New("Expect either \"user\" flag or \"bot\" flag. See help text for details.")
-	}
-
-	if toUser && toBot {
-		return errors.New("Expect either \"user\" flag or \"bot\" flag but not both. See help text for details.")
-	}
-
-	if toUser {
-		return botToUser(command, args, a)
-	}
-
-	usersToBots(args, a)
-	return nil
-}
-
-func userInviteCmdF(command *cobra.Command, args []string) error {
-	a, err := InitDBCommandContextCobra(command)
-	if err != nil {
-		return err
-	}
-	defer a.Shutdown()
-
-	if len(args) < 2 {
-		return errors.New("Expected at least two arguments. See help text for details.")
-	}
-
-	email := args[0]
-	email = strings.ToLower(email)
-	if !model.IsValidEmail(email) {
-		return errors.New("Invalid email")
-	}
-
-	teams := getTeamsFromTeamArgs(a, args[1:])
-	for i, team := range teams {
-		err := inviteUser(a, email, team, args[i+1])
-
-		if err != nil {
-			CommandPrintErrorln(err.Error())
-		}
-	}
-
-	return nil
-}
-
-func inviteUser(a *app.App, email string, team *model.Team, teamArg string) error {
-	invites := []string{email}
-	if team == nil {
-		return fmt.Errorf("Can't find team '%v'", teamArg)
-	}
-
-	if !*a.Config().ServiceSettings.EnableEmailInvitations {
-		return fmt.Errorf("Email invites are disabled.")
-	}
-
-	a.SendInviteEmails(team, "Administrator", "Mattermost CLI "+model.NewId(), invites, *a.Config().ServiceSettings.SiteURL)
-	CommandPrettyPrintln("Invites may or may not have been sent.")
-
-	return nil
 }
 
 func resetUserPasswordCmdF(command *cobra.Command, args []string) error {
@@ -726,14 +535,8 @@ func deleteUserCmdF(command *cobra.Command, args []string) error {
 			return errors.New("Unable to find user '" + args[i] + "'")
 		}
 
-		if user.IsBot {
-			if err := a.PermanentDeleteBot(user.Id); err != nil {
-				return err
-			}
-		} else {
-			if err := a.PermanentDeleteUser(user); err != nil {
-				return err
-			}
+		if err := a.PermanentDeleteUser(user); err != nil {
+			return err
 		}
 	}
 
