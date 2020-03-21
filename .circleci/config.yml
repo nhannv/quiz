@@ -116,8 +116,8 @@ jobs:
             ulimit -n 8096
             mkdir -p quiz/client/plugins
             docker run -it --net circleci_mm-test \
-              --env TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \
-              --env TEST_DATABASE_POSTGRESQL_DSN="postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10" \
+              --env TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/quiz_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \
+              --env TEST_DATABASE_POSTGRESQL_DSN="postgres://mmuser:mostest@postgres:5432/quiz_test?sslmode=disable&connect_timeout=10" \
               --env TEST_DATABASE_MYSQL_ROOT_PASSWD=mostest \
               --env CI_INBUCKET_HOST=inbucket \
               --env CI_MINIO_HOST=minio \
@@ -126,7 +126,7 @@ jobs:
               --env CI_INBUCKET_SMTP_PORT=10025 \
               --env CI_LDAP_HOST=openldap \
               --env IS_CI="true" \
-              --env MM_SQLSETTINGS_DATASOURCE="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8" \
+              --env MM_SQLSETTINGS_DATASOURCE="mmuser:mostest@tcp(mysql:3306)/quiz_test?charset=utf8mb4,utf8" \
               --env MM_EMAILSETTINGS_SMTPSERVER=inbucket \
               --env MM_EMAILSETTINGS_SMTPPORT=10025 \
               --env MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://elasticsearch:9200 \
@@ -188,7 +188,7 @@ jobs:
             mkdir -p quiz/client/plugins
             cd quiz/build
             echo "Creating databases"
-            docker-compose --no-ansi exec -T postgres sh -c 'exec echo "CREATE DATABASE migrated; CREATE DATABASE latest;" | exec psql -U mmuser mattermost_test'
+            docker-compose --no-ansi exec -T postgres sh -c 'exec echo "CREATE DATABASE migrated; CREATE DATABASE latest;" | exec psql -U mmuser quiz_test'
             echo "Importing postgres dump from version 5.0"
             docker-compose --no-ansi exec -T postgres psql -U mmuser -d migrated < ../scripts/mattermost-postgresql-5.0.sql
             docker run -it --net circleci_mm-test \
@@ -212,7 +212,7 @@ jobs:
             docker-compose --no-ansi exec -T postgres pg_dump --schema-only -d migrated -U mmuser > migrated.sql
             docker-compose --no-ansi exec -T postgres pg_dump --schema-only -d latest -U mmuser > latest.sql
             echo "Removing databases created for db comparison"
-            docker-compose --no-ansi exec -T postgres sh -c 'exec echo "DROP DATABASE migrated; DROP DATABASE latest;" | exec psql -U mmuser mattermost_test'
+            docker-compose --no-ansi exec -T postgres sh -c 'exec echo "DROP DATABASE migrated; DROP DATABASE latest;" | exec psql -U mmuser quiz_test'
 
             echo "Generating diff"
             diff migrated.sql latest.sql > diff.txt && echo "Both schemas are same" || (echo "Schema mismatch" && cat diff.txt && exit 1)

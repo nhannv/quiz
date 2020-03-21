@@ -191,6 +191,10 @@ func NewServer(options ...Option) (*Server, error) {
 	s.sessionCache = s.CacheProvider.NewCache(model.SESSION_CACHE_SIZE)
 	s.statusCache = s.CacheProvider.NewCache(model.STATUS_CACHE_SIZE)
 
+	err := s.RunOldAppInitialization()
+	if err != nil {
+		return nil, err
+	}
 	model.AppErrorInit(utils.T)
 
 	s.timezones = timezones.New()
@@ -237,8 +241,8 @@ func NewServer(options ...Option) (*Server, error) {
 	if model.BuildNumber == "dev" {
 		s.UpdateConfig(func(cfg *model.Config) { *cfg.ServiceSettings.EnableDeveloper = true })
 	}
-	status := s.Store
-	if err := status.Status().ResetAll(); err != nil {
+
+	if err := s.Store.Status().ResetAll(); err != nil {
 		mlog.Error("Error to reset the server status.", mlog.Err(err))
 	}
 

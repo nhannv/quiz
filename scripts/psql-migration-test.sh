@@ -4,7 +4,7 @@ DUMPDIR=`mktemp -d 2>/dev/null || mktemp -d -t 'dumpDir'`
 cp config/config.json $TMPDIR
 
 echo "Creating databases"
-docker exec mattermost-postgres sh -c 'exec echo "CREATE DATABASE migrated; CREATE DATABASE latest;" | exec psql -U mmuser mattermost_test'
+docker exec mattermost-postgres sh -c 'exec echo "CREATE DATABASE migrated; CREATE DATABASE latest;" | exec psql -U mmuser quiz_test'
 
 echo "Importing postgres dump from version 5.0"
 docker exec -i mattermost-postgres psql -U mmuser -d migrated < $(pwd)/scripts/mattermost-postgresql-5.0.sql
@@ -27,7 +27,7 @@ docker exec mattermost-postgres pg_dump --schema-only -d migrated -U mmuser > $D
 docker exec mattermost-postgres pg_dump --schema-only -d latest -U mmuser > $DUMPDIR/latest.sql
 
 echo "Removing databases created for db comparison"
-docker exec mattermost-postgres sh -c 'exec echo "DROP DATABASE migrated; DROP DATABASE latest;" | exec psql -U mmuser mattermost_test'
+docker exec mattermost-postgres sh -c 'exec echo "DROP DATABASE migrated; DROP DATABASE latest;" | exec psql -U mmuser quiz_test'
 
 echo "Generating diff"
 diff $DUMPDIR/migrated.sql $DUMPDIR/latest.sql > $DUMPDIR/diff.txt

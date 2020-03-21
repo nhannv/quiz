@@ -1,28 +1,28 @@
 version: '2.4'
 services:
   mysql:
-    container_name: mattermost-mysql
+    container_name: quiz-mysql
     ports:
       - "3306:3306"
     extends:
         file: build/docker-compose.common.yml
         service: mysql
-  postgres:
-    container_name: mattermost-postgres
-    ports:
-      - "5432:5432"
-    extends:
-        file: build/docker-compose.common.yml
-        service: postgres
+  # postgres:
+  #   container_name: mattermost-postgres
+  #   ports:
+  #     - "5432:5432"
+  #   extends:
+  #       file: build/docker-compose.common.yml
+  #       service: postgres
   minio:
-    container_name: mattermost-minio
+    container_name: quiz-minio
     ports:
       - "9000:9000"
     extends:
         file: build/docker-compose.common.yml
         service: minio
   inbucket:
-    container_name: mattermost-inbucket
+    container_name: quiz-inbucket
     ports:
       - "10025:10025"
       - "10080:10080"
@@ -31,7 +31,7 @@ services:
         file: build/docker-compose.common.yml
         service: inbucket
   openldap:
-    container_name: mattermost-openldap
+    container_name: quiz-openldap
     ports:
       - "389:389"
       - "636:636"
@@ -39,7 +39,7 @@ services:
         file: build/docker-compose.common.yml
         service: openldap
   elasticsearch:
-    container_name: mattermost-elasticsearch
+    container_name: quiz-elasticsearch
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -49,16 +49,16 @@ services:
   start_dependencies:
     image: mattermost/mattermost-wait-for-dep:latest
     networks:
-      - mm-test
+      - q-test
     depends_on:
       - mysql
-      - postgres
+      # - postgres
       - minio
       - inbucket
       - openldap
       - elasticsearch
-    command: postgres:5432 mysql:3306 minio:9000 inbucket:10080 openldap:389 elasticsearch:9200
+    command: mysql:3306 minio:9000 inbucket:10080 openldap:389 elasticsearch:9200
 
 networks:
-  mm-test:
+  q-test:
     driver: bridge

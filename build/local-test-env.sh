@@ -29,8 +29,8 @@ up()
         -w /go/src/github.com/nhannv/quiz/ \
         --net ${COMPOSE_PROJECT_NAME}_mm-test \
         -e GOPATH="/go" \
-        -e TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \
-        -e TEST_DATABASE_POSTGRESQL_DSN="postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10" \
+        -e TEST_DATABASE_MYSQL_DSN="mmuser:mostest@tcp(mysql:3306)/quiz_test?charset=utf8mb4,utf8\u0026readTimeout=30s\u0026writeTimeout=30s" \
+        -e TEST_DATABASE_POSTGRESQL_DSN="postgres://mmuser:mostest@postgres:5432/quiz_test?sslmode=disable&connect_timeout=10" \
         -e TEST_DATABASE_MYSQL_ROOT_PASSWD="mostest" \
         -e CI_INBUCKET_HOST="inbucket" \
         -e CI_MINIO_HOST="minio" \
@@ -39,7 +39,7 @@ up()
         -e CI_INBUCKET_SMTP_PORT="10025" \
         -e CI_LDAP_HOST="openldap" \
         -e IS_CI=true \
-        -e MM_SQLSETTINGS_DATASOURCE="mmuser:mostest@tcp(mysql:3306)/mattermost_test?charset=utf8mb4,utf8" \
+        -e MM_SQLSETTINGS_DATASOURCE="mmuser:mostest@tcp(mysql:3306)/quiz_test?charset=utf8mb4,utf8" \
         -e MM_EMAILSETTINGS_SMTPSERVER="inbucket" \
         -e MM_EMAILSETTINGS_SMTPPORT="10025" \
         -e MM_ELASTICSEARCHSETTINGS_CONNECTIONURL="http://elasticsearch:9200" \
