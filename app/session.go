@@ -291,7 +291,7 @@ func (a *App) CreateUserAccessToken(token *model.UserAccessToken) (*model.UserAc
 		return nil, err
 	}
 
-	if !*a.Config().ServiceSettings.EnableUserAccessTokens && !user.IsBot {
+	if !*a.Config().ServiceSettings.EnableUserAccessTokens {
 		return nil, model.NewAppError("CreateUserAccessToken", "app.user_access_token.disabled", nil, "", http.StatusNotImplemented)
 	}
 
@@ -302,11 +302,8 @@ func (a *App) CreateUserAccessToken(token *model.UserAccessToken) (*model.UserAc
 		return nil, err
 	}
 
-	// Don't send emails to bot users.
-	if !user.IsBot {
-		if err := a.SendUserAccessTokenAddedEmail(user.Email, user.Locale, a.GetSiteURL()); err != nil {
-			a.Log().Error("Unable to send user access token added email", mlog.Err(err), mlog.String("user_id", user.Id))
-		}
+	if err := a.SendUserAccessTokenAddedEmail(user.Email, user.Locale, a.GetSiteURL()); err != nil {
+		a.Log().Error("Unable to send user access token added email", mlog.Err(err), mlog.String("user_id", user.Id))
 	}
 
 	return token, nil
@@ -328,7 +325,7 @@ func (a *App) createSessionForUserAccessToken(tokenString string) (*model.Sessio
 		return nil, err
 	}
 
-	if !*a.Config().ServiceSettings.EnableUserAccessTokens && !user.IsBot {
+	if !*a.Config().ServiceSettings.EnableUserAccessTokens {
 		return nil, model.NewAppError("createSessionForUserAccessToken", "app.user_access_token.invalid_or_missing", nil, "EnableUserAccessTokens=false", http.StatusUnauthorized)
 	}
 
@@ -345,9 +342,6 @@ func (a *App) createSessionForUserAccessToken(tokenString string) (*model.Sessio
 
 	session.AddProp(model.SESSION_PROP_USER_ACCESS_TOKEN_ID, token.Id)
 	session.AddProp(model.SESSION_PROP_TYPE, model.SESSION_TYPE_USER_ACCESS_TOKEN)
-	if user.IsBot {
-		session.AddProp(model.SESSION_PROP_IS_BOT, model.SESSION_PROP_IS_BOT_VALUE)
-	}
 	if user.IsGuest() {
 		session.AddProp(model.SESSION_PROP_IS_GUEST, "true")
 	} else {

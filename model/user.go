@@ -85,9 +85,6 @@ type User struct {
 	MfaActive              bool      `json:"mfa_active,omitempty"`
 	MfaSecret              string    `json:"mfa_secret,omitempty"`
 	LastActivityAt         int64     `db:"-" json:"last_activity_at,omitempty"`
-	IsBot                  bool      `db:"-" json:"is_bot,omitempty"`
-	BotDescription         string    `db:"-" json:"bot_description,omitempty"`
-	BotLastIconUpdate      int64     `db:"-" json:"bot_last_icon_update,omitempty"`
 	TermsOfServiceId       string    `db:"-" json:"terms_of_service_id,omitempty"`
 	TermsOfServiceCreateAt int64     `db:"-" json:"terms_of_service_create_at,omitempty"`
 }
@@ -167,17 +164,6 @@ func (u UserSlice) IDs() []string {
 		ids = append(ids, user.Id)
 	}
 	return ids
-}
-
-func (u UserSlice) FilterWithoutBots() UserSlice {
-	var matches []*User
-
-	for _, user := range u {
-		if !user.IsBot {
-			matches = append(matches, user)
-		}
-	}
-	return UserSlice(matches)
 }
 
 func (u UserSlice) FilterByActive(active bool) UserSlice {
@@ -497,7 +483,7 @@ func (u *UserAuth) ToJson() string {
 
 // Generate a valid strong etag so the browser can cache the results
 func (u *User) Etag(showFullName, showEmail bool) string {
-	return Etag(u.Id, u.UpdateAt, u.TermsOfServiceId, u.TermsOfServiceCreateAt, showFullName, showEmail, u.BotLastIconUpdate)
+	return Etag(u.Id, u.UpdateAt, u.TermsOfServiceId, u.TermsOfServiceCreateAt, showFullName, showEmail)
 }
 
 // Remove any private data from the user object

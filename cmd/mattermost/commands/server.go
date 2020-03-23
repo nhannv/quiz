@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/mattermost/viper"
+	"github.com/nhannv/quiz/v5/api4"
 	"github.com/nhannv/quiz/v5/app"
 	"github.com/nhannv/quiz/v5/config"
 	"github.com/nhannv/quiz/v5/mlog"
@@ -70,6 +71,7 @@ func runServer(configStore config.Store, disableConfigWatch bool, usedPlatform b
 		mlog.Error("The platform binary has been deprecated, please switch to using the mattermost binary.")
 	}
 
+	api4.Init(server, server.AppOptions, server.Router)
 	wsapi.Init(server.FakeApp(), server.WebSocketRouter)
 	web.New(server, server.AppOptions, server.Router)
 
